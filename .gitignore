@@ -2,3 +2,5 @@ node_modules/
 *.log
 fornas-*.pdf
 fornas-text-*.txt
+.opencode/
+self-harness/

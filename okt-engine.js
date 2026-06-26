@@ -110,7 +110,7 @@ function autoDeriveProfile(drugName, drugClass, drugSubclass) {
 
 // ── Drug lookup ──
 const NAME_ALIASES = {
-  'digoxin': 'digoksin', 'omeprazole': 'omeprazol', 'amoxicillin': 'amoksisilin', 'amoxycillin': 'amoksisilin',
+  'digoxin': 'digoksin', 'omeprazole': 'omeprazol', 'omeprasol': 'omeprazol', 'amoxicillin': 'amoksisilin', 'amoxycillin': 'amoksisilin',
   'ciprofloxacin': 'siprofloksasin', 'acyclovir': 'asiklovir', 'levothyroxine': 'levotiroksin',
   'phenytoin': 'fenitoin', 'phenobarbital': 'fenobarbital', 'carbamazepine': 'karbamazepin',
   'valproic acid': 'valproat', 'fluoxetine': 'fluoksetin', 'haloperidol': 'haloperidol',
@@ -136,7 +136,7 @@ const NAME_ALIASES = {
   'furosemide': 'furosemid', 'spironolactone': 'spironolakton', 'hydrochlorothiazide': 'hidroklorotiazid',
   'alprazolam': 'alprazolam', 'diazepam': 'diazepam', 'lorazepam': 'lorazepam',
   'clobazam': 'klobazam', 'clonazepam': 'klonazepam', 'phenobarbital': 'fenobarbital',
-  'metoclopramide': 'metoklopramid', 'ondansetron': 'ondansetron', 'omeprazole': 'omeprazol',
+  'metoclopramide': 'metoklopramid', 'ondansetron': 'ondansetron', 'omeprazole': 'omeprazol', 'omeprasol': 'omeprazol',
   'lansoprazole': 'lansoprazol', 'pantoprazole': 'pantoprazol', 'ketoconazole': 'ketokonazol',
   'fluconazole': 'flukonazol', 'itraconazole': 'itrakonazol', 'voriconazole': 'vorikonazol',
   'isotretinoin': 'asam retinoat', 'tretinoin': 'asam retinoat',
@@ -380,47 +380,51 @@ function printUsage() {
   node okt-engine.js list-all`);
 }
 
-const args = process.argv.slice(2);
-if (!args.length) { printUsage(); process.exit(0); }
+module.exports = { evaluateOKT, findDrug, loadDB, loadRules, resolveClassification, normalizeClassification, autoDeriveProfile, printResult };
 
-const useJson = args.includes('--json');
-const cleanArgs = args.filter(a => a !== '--json');
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  if (!args.length) { printUsage(); process.exit(0); }
 
-switch (cleanArgs[0]) {
-  case 'evaluate': {
-    if (!cleanArgs[1]) { console.log('Error: provide drug name'); process.exit(1); }
-    const ctx = cleanArgs[2] || 'auto';
-    const result = evaluateOKT(cleanArgs[1], ctx);
-    printResult(result);
-    if (useJson) console.log(JSON.stringify(result, null, 2));
-    break;
-  }
-  case 'list': {
-    const db = loadDB();
-    const filter = args[1] ? args[1].toLowerCase() : '';
-    for (const [cls, cd] of Object.entries(db.drug_catalog.therapeutic_classes)) {
-      if (filter && !cls.toLowerCase().includes(filter)) continue;
-      console.log(`\n${cls}:`);
-      for (const [sub, sd] of Object.entries(cd.subclasses)) {
-        for (const ex of (sd.examples || [])) {
-          const r = evaluateOKT(ex, 'auto');
-          const badge = r.eligibility === 'ELIGIBLE' ? '\x1b[32m\u2713\x1b[0m' : r.eligibility === 'REJECTED' ? '\x1b[31m\u2717\x1b[0m' : '\x1b[33m~\x1b[0m';
-          console.log(`  ${badge} ${ex.padEnd(35)} ${r.eligibility.padEnd(12)} ${(r.grounds || []).join(', ')}`);
+  const useJson = args.includes('--json');
+  const cleanArgs = args.filter(a => a !== '--json');
+
+  switch (cleanArgs[0]) {
+    case 'evaluate': {
+      if (!cleanArgs[1]) { console.log('Error: provide drug name'); process.exit(1); }
+      const ctx = cleanArgs[2] || 'auto';
+      const result = evaluateOKT(cleanArgs[1], ctx);
+      printResult(result);
+      if (useJson) console.log(JSON.stringify(result, null, 2));
+      break;
+    }
+    case 'list': {
+      const db = loadDB();
+      const filter = args[1] ? args[1].toLowerCase() : '';
+      for (const [cls, cd] of Object.entries(db.drug_catalog.therapeutic_classes)) {
+        if (filter && !cls.toLowerCase().includes(filter)) continue;
+        console.log(`\n${cls}:`);
+        for (const [sub, sd] of Object.entries(cd.subclasses)) {
+          for (const ex of (sd.examples || [])) {
+            const r = evaluateOKT(ex, 'auto');
+            const badge = r.eligibility === 'ELIGIBLE' ? '\x1b[32m\u2713\x1b[0m' : r.eligibility === 'REJECTED' ? '\x1b[31m\u2717\x1b[0m' : '\x1b[33m~\x1b[0m';
+            console.log(`  ${badge} ${ex.padEnd(35)} ${r.eligibility.padEnd(12)} ${(r.grounds || []).join(', ')}`);
+          }
         }
       }
+      break;
     }
-    break;
-  }
-  case 'list-all': {
-    const db = loadDB();
-    for (const d of db.drug_catalog.all_drugs) {
-      const r = evaluateOKT(d.name, 'auto');
-      const badge = r.eligibility === 'ELIGIBLE' ? '\x1b[32m\u2713\x1b[0m' : r.eligibility === 'REJECTED' ? '\x1b[31m\u2717\x1b[0m' : '\x1b[33m~\x1b[0m';
-      console.log(`  ${badge} ${d.name.padEnd(30)} ${r.eligibility.padEnd(12)} ${(r.grounds || []).join(', ').padEnd(25)} ${d.class || ''}`);
+    case 'list-all': {
+      const db = loadDB();
+      for (const d of db.drug_catalog.all_drugs) {
+        const r = evaluateOKT(d.name, 'auto');
+        const badge = r.eligibility === 'ELIGIBLE' ? '\x1b[32m\u2713\x1b[0m' : r.eligibility === 'REJECTED' ? '\x1b[31m\u2717\x1b[0m' : '\x1b[33m~\x1b[0m';
+        console.log(`  ${badge} ${d.name.padEnd(30)} ${r.eligibility.padEnd(12)} ${(r.grounds || []).join(', ').padEnd(25)} ${d.class || ''}`);
+      }
+      break;
     }
-    break;
+    default:
+      console.log(`Unknown: ${args[0]}`);
+      printUsage();
   }
-  default:
-    console.log(`Unknown: ${args[0]}`);
-    printUsage();
 }
