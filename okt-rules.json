@@ -1,0 +1,234 @@
+{
+  "_metadata": {
+    "title": "OKT (Obat Keras Tertentu) Rule Definitions",
+    "description": "Rules for determining if a prescription drug (Obat Keras) can be dispensed by a pharmacist without a doctor's prescription under Indonesian law",
+    "regulatory_basis": {
+      "primary": "Pasal 320 ayat (5) UU No. 17 Tahun 2023 tentang Kesehatan",
+      "implementing": "Pasal 922 ayat (2) PP No. 28 Tahun 2024",
+      "technical": "Permenkes No. 5 Tahun 2026 tentang Perbekalan Kesehatan (revokes Permenkes 919/1993)",
+      "note": "The formal OKT list (daftar Obat Keras Tertentu) per Pasal 922(3) PP 28/2024 has not been published as of June 2026. This algorithm uses the generic criteria from PP 28/2024 Pasal 922(2) and clinical/pharmacological reasoning."
+    },
+    "last_updated": "2026-06-26"
+  },
+  "hard_exclusions": {
+    "description": "Drugs that are ALWAYS excluded from OKT eligibility regardless of other criteria",
+    "rules": [
+      {
+        "id": "EXCL-001",
+        "name": "Narcotics Exclusion",
+        "regulation": "Pasal 78(6) Permenkes 5/2026; UU 35/2009",
+        "condition": "drug.classification == 'narkotika'",
+        "rationale": "Narcotics (Narkotika Gol. I, II, III) require strict controlled prescription (blanko narkotika) and are explicitly excluded from pharmacist dispensing without prescription"
+      },
+      {
+        "id": "EXCL-002",
+        "name": "Psychotropics Exclusion",
+        "regulation": "Pasal 78(6) Permenkes 5/2026; UU 5/1997",
+        "condition": "drug.classification == 'psikotropika'",
+        "rationale": "Psychotropics (Psikotropika Gol. I, II, III, IV) are explicitly excluded from pharmacist dispensing without prescription; even electronic prescriptions via telemedicine are prohibited"
+      },
+      {
+        "id": "EXCL-003",
+        "name": "Not Obat Keras",
+        "condition": "drug.classification == 'obat_bebas' OR drug.classification == 'obat_bebas_terbatas'",
+        "rationale": "Drug is already available without prescription; OKT rules do not apply"
+      }
+    ]
+  },
+  "eligibility_pillars": {
+    "description": "Three eligibility criteria per Pasal 922(2) PP 28/2024. A drug must satisfy AT LEAST ONE pillar to qualify, AND pass all safety gates.",
+    "pillars": {
+      "self_medication": {
+        "id": "PILLAR-01",
+        "name": "Swamedikasi (Self-Medication)",
+        "regulation": "Pasal 922(2)(a) PP 28/2024",
+        "description": "Drugs suitable for self-medication of common, self-recognizable conditions",
+        "criteria": [
+          "Target condition is self-recognizable by patient (e.g., fever, pain, cough, heartburn)",
+          "Condition is acute, self-limiting, and does not require diagnostic confirmation",
+          "Drug has well-established safety profile with wide therapeutic index",
+          "Low risk of masking serious underlying disease",
+          "Short-term use (typically ≤7-14 days)",
+          "Minimal drug-drug interaction risk with common OTC products",
+          "No requirement for therapeutic drug monitoring (TDM)",
+          "Standardized dosing (not weight-based or requiring titration)"
+        ]
+      },
+      "chronic_refill": {
+        "id": "PILLAR-02",
+        "name": "Resep Ulangan (Chronic Disease Refill)",
+        "regulation": "Pasal 922(2)(b) PP 28/2024",
+        "description": "Drugs for stable chronic conditions where pharmacist can provide refills after initial diagnosis by physician",
+        "criteria": [
+          "Condition is chronic and stable (e.g., hypertension, diabetes, dyslipidemia)",
+          "Patient has established diagnosis by physician with prior valid prescription",
+          "Dosage is stable and not requiring frequent adjustment",
+          "Clinical monitoring can be performed by pharmacist (e.g., blood pressure, blood glucose)",
+          "Drug is included in National Formulary (Formularium Nasional) for the indication",
+          "Risk of adverse events is manageable without physician intervention",
+          "Contraindications can be screened by pharmacist via patient interview"
+        ]
+      },
+      "topical": {
+        "id": "PILLAR-03",
+        "name": "Topical / Obat Luar",
+        "regulation": "Pasal 922(2)(c) PP 28/2024",
+        "description": "Drugs applied topically for local effect with minimal systemic absorption",
+        "criteria": [
+          "Route of administration is topical (cutaneous, ophthalmic, otic, nasal, rectal, vaginal)",
+          "Minimal systemic absorption (bioavailability <5%)",
+          "Local action at application site",
+          "Low risk of systemic adverse effects",
+          "Patient can self-apply with simple instructions",
+          "Low abuse potential"
+        ]
+      }
+    }
+  },
+  "safety_gates": {
+    "description": "Safety checks applied regardless of which pillar the drug qualifies under. FAILURE on ANY gate = REJECTED.",
+    "gates": [
+      {
+        "id": "SAFE-01",
+        "name": "Narrow Therapeutic Index (NTI)",
+        "condition": "drug.attributes.is_nti == true",
+        "action": "REJECT",
+        "examples": ["Warfarin", "Digoxin", "Phenytoin", "Lithium", "Theophylline", "Carbamazepine"],
+        "rationale": "NTI drugs require precise dosing and frequent monitoring; pharmacist dispensing without prescription poses unacceptable risk"
+      },
+      {
+        "id": "SAFE-02",
+        "name": "Requires Therapeutic Drug Monitoring (TDM)",
+        "condition": "drug.attributes.requires_tdm == true",
+        "action": "REJECT",
+        "examples": ["Warfarin (INR)", "Insulin (blood glucose)", "Lithium (serum level)", "Digoxin (serum level)", "Aminoglycosides (peak/trough)"],
+        "rationale": "Drugs requiring lab monitoring for safety/efficacy must be managed by physician"
+      },
+      {
+        "id": "SAFE-03",
+        "name": "High Abuse/Dependence Potential (non-scheduled)",
+        "condition": "drug.attributes.abuse_potential == 'high'",
+        "action": "REJECT",
+        "examples": ["Tramadol (weak opioid - non-narcotic schedule)", "Pregabalin", "Gabapentin (in some contexts)", "Carisoprodol", "Ketamine"],
+        "rationale": "Even if not classified as narcotic/psychotropic, high abuse potential drugs should remain prescription-only"
+      },
+      {
+        "id": "SAFE-04",
+        "name": "Chemotherapy / Immunosuppressant / Biologic",
+        "condition": "drug.attributes.is_specialist_only == true",
+        "action": "REJECT",
+        "examples": ["All chemotherapy agents", "Monoclonal antibodies", "Immunosuppressants (tacrolimus, cyclosporine)", "Targeted therapies"],
+        "rationale": "These require specialist diagnosis, administration, and monitoring"
+      },
+      {
+        "id": "SAFE-05",
+        "name": "Injectable (Parenteral) Route - Except insulin/self-admin",
+        "condition": "drug.attributes.route == 'injectable' AND drug.attributes.self_admin == false",
+        "action": "REJECT",
+        "examples": ["IV antibiotics", "IM corticosteroids", "SC biologics (non-self-admin)"],
+        "rationale": "Parenteral drugs generally require healthcare professional administration"
+      },
+      {
+        "id": "SAFE-06",
+        "name": "Diagnosis-Dependent Therapy",
+        "condition": "drug.attributes.requires_diagnosis == true",
+        "action": "REJECT for self-medication; ALLOW for chronic refill if diagnosis established",
+        "examples": ["Antibiotics (require confirmed bacterial infection)", "Antivirals", "Antipsychotics"],
+        "rationale": "Drugs requiring confirmed medical diagnosis cannot be initiated by pharmacist but may be refilled"
+      },
+      {
+        "id": "SAFE-07",
+        "name": "Pregnancy Category D/X or Lactation Risk",
+        "condition": "drug.attributes.pregnancy_category IN ['D', 'X']",
+        "action": "REJECT for self-medication; CONDITIONAL for chronic refill",
+        "examples": ["Statins (preg X)", "ACE inhibitors (preg D)", "Warfarin (preg X)", "Isotretinoin (preg X)"],
+        "rationale": "Significant teratogenic risk requires physician counseling"
+      }
+    ]
+  },
+  "drug_attributes": {
+    "description": "Attribute definitions used by the safety gates",
+    "attributes": {
+      "is_nti": { "type": "boolean", "description": "Drug has narrow therapeutic index (toxic dose close to effective dose)" },
+      "requires_tdm": { "type": "boolean", "description": "Drug requires routine therapeutic drug monitoring (lab testing)" },
+      "abuse_potential": { "type": "enum", "values": ["none", "low", "moderate", "high"], "description": "Non-scheduled abuse/dependence potential" },
+      "is_specialist_only": { "type": "boolean", "description": "Drug requires specialist physician management" },
+      "route": { "type": "enum", "values": ["oral", "topical", "injectable", "inhaled", "rectal", "vaginal", "ophthalmic", "otic", "nasal", "transdermal"], "description": "Route of administration" },
+      "self_admin": { "type": "boolean", "description": "Can the patient self-administer this drug" },
+      "requires_diagnosis": { "type": "boolean", "description": "Requires confirmed diagnosis before use" },
+      "pregnancy_category": { "type": "enum", "values": ["A", "B", "C", "D", "X", "N/A"], "description": "FDA/Indonesian pregnancy risk category" },
+      "typical_duration": { "type": "string", "description": "Typical treatment duration for standard indication" },
+      "has_generic": { "type": "boolean", "description": "Generic equivalent available" }
+    }
+  },
+  "default_restrictions": {
+    "description": "Default quantity/duration restrictions applied to OKT dispensing",
+    "self_medication_limits": {
+      "max_duration_days": 7,
+      "max_quantity": "As specified in the drug's OWA history or standard pack size",
+      "refill_prohibition": true,
+      "counseling_required": true,
+      "documentation_required": true
+    },
+    "chronic_refill_limits": {
+      "max_duration_days": 30,
+      "max_refills": 1,
+      "previous_prescription_required": true,
+      "stability_confirmation_required": true,
+      "monitoring_documentation_required": true
+    },
+    "topical_limits": {
+      "max_quantity": "1 tube/pack/container",
+      "refill_prohibition": false,
+      "counseling_required": false,
+      "area_restriction": "Must not be applied to large body surface areas if potent corticosteroid"
+    }
+  },
+  "reference_lists": {
+    "historic_owa": {
+      "description": "Historic Obat Wajib Apotek lists (revoked by Permenkes 3/2021 but useful as reference for self-medication OKT candidates)",
+      "note": "These lists are no longer legally binding but indicate drugs historically deemed suitable for pharmacist dispensing",
+      "owa_1": {
+        "examples": ["Omeprazole 20mg (max 10)", "Mefenamic acid 500mg (max 12)", "Ranitidine 150mg (max 10)", "Oral contraceptives (max 1 cycle)"],
+        "indications": ["Peptic ulcer (non-investigated dyspepsia)", "Pain", "Contraception"]
+      },
+      "owa_2": {
+        "examples": ["Salbutamol 2mg (max 30 tabs)", "Dexamethasone 0.5mg (max 12)", "Nystatin suspension", "Clindamycin topical (acne)", "Diclofenac topical"],
+        "indications": ["Asthma (mild intermittent)", "Inflammation", "Fungal infection", "Acne", "Musculoskeletal pain"]
+      },
+      "owa_3": {
+        "examples": ["Warfarin (refill for INR-stable)", "Insulin (refill for known DM)", "Antihypertensives (refill)", "Allopurinol (refill)", "Cetirizine (refill)"],
+        "indications": ["Chronic disease refills", "Anticoagulation (stable)", "Diabetes (stable)", "Hypertension (stable)", "Gout (stable)"]
+      }
+    },
+    "strong_okt_candidates": {
+      "description": "Drugs likely eligible under the OKT framework based on PP 28/2024 criteria",
+      "self_medication": [
+        "Omeprazole (short-term dyspepsia, max 7-14 days)",
+        "Ranitidine (short-term dyspepsia, max 10 tabs)",
+        "Mefenamic acid (dysmenorrhea, pain)",
+        "Ketoprofen topical (musculoskeletal pain)",
+        "Diclofenac topical (musculoskeletal pain)",
+        "Salbutamol inhaler (mild intermittent asthma - with pharmacist counseling)",
+        "Antihistamines (cetirizine, loratadine for allergy - some already reclassified OTC)"
+      ],
+      "chronic_refill": [
+        "Amlodipine (hypertension refill, stable)",
+        "Captopril / Lisinopril (hypertension refill, stable)",
+        "Metformin (type 2 diabetes refill, stable)",
+        "Simvastatin / Atorvastatin (dyslipidemia refill, stable)",
+        "Levothyroxine (hypothyroidism refill, stable dose)",
+        "Allopurinol (gout refill, stable)",
+        "Insulin (diabetes refill, stable - with blood glucose monitoring)"
+      ],
+      "topical": [
+        "Clindamycin topical (acne)",
+        "Mupirocin topical (impetigo - limited area)",
+        "Ketoconazole cream (fungal infection)",
+        "Betamethasone valerate cream (steroid-responsive dermatoses - limited area/potency)",
+        "Hydrocortisone cream (mild inflammation - low potency)",
+        "Acyclovir cream (herpes labialis)"
+      ]
+    }
+  }
+}
