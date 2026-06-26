@@ -1,35 +1,6 @@
-#!/usr/bin/env node
-/**
- * OKT (Obat Keras Tertentu) Decision Engine
- * -------------------------------------------------
- * Determines whether a specific Obat Keras can be dispensed
- * by a pharmacist without a doctor's prescription in Indonesia.
- *
- * Legal basis:
- *   - UU 17/2023 Pasal 320(5): "Obat keras tertentu dapat diserahkan
- *     oleh apoteker tanpa resep"
- *   - PP 28/2024 Pasal 922(2): OKT criteria:
- *     (a) Self-medication (swamedikasi)
- *     (b) Chronic disease refill (resep ulangan)
- *     (c) Topical (obat topikal)
- *
- * Usage:
- *   node okt-engine.js evaluate <drug_name> [context]
- *
- *   context: "self_medication" | "chronic_refill" | "topical" | "auto"
- *
- * Examples:
- *   node okt-engine.js evaluate Amoxicillin
- *   node okt-engine.js evaluate Omeprazole self_medication
- *   node okt-engine.js evaluate Amlodipine chronic_refill
- */
-
 const fs = require('fs');
 const path = require('path');
 
-// ─────────────────────────────────────────────────────────
-// Load databases
-// ─────────────────────────────────────────────────────────
 const DB_PATH = path.join(__dirname, 'database.json');
 const RULES_PATH = path.join(__dirname, 'okt-rules.json');
 
@@ -45,275 +16,212 @@ function loadRules() {
   return _rules;
 }
 
-// ─────────────────────────────────────────────────────────
-// Drug attribute profiles for evaluation
-// ─────────────────────────────────────────────────────────
-const DRUG_PROFILES = {
+// ── Drug attribute rules (class-based) ──
+const NTI_DRUGS = new Set(['warfarin', 'digoksin', 'fenitoin', 'karbamazepin', 'valproat', 'teofilin', 'siklosporin', 'takrolimus', 'lithium', 'fenytoin']);
+const TDM_REQUIRED = new Set(['warfarin', 'digoksin', 'fenitoin', 'karbamazepin', 'valproat', 'teofilin', 'siklosporin', 'takrolimus', 'lithium', 'gentamisin', 'amikasin', 'vankomisin']);
+const HIGH_ABUSE = new Set(['tramadol', 'kodein', 'morfin', 'fentanil', 'oksikodon', 'petidin', 'sufentanil', 'remifentanil', 'hidromorfon', 'metadon', 'ketamin', 'propofol']);
+const SPECIALIST_ONLY_CLASSES = new Set(['Chemotherapy', 'Immunosuppressant']);
+const REQUIRES_DIAG_CLASSES = new Set(['Anti-infective', 'Antiviral', 'Antiretroviral', 'Antituberculosis']);
+const SELF_MEDICATION_CLASSES = new Set(['Analgesic & Anti-inflammatory', 'Gastrointestinal', 'Antiallergic & Anaphylaxis', 'Respiratory']);
+const CHRONIC_REFILL_CLASSES = new Set(['Cardiovascular', 'Antidiabetic', 'Endocrine', 'Urological']);
+const TOPICAL_CLASSES = new Set(['Dermatological', 'Ophthalmological']);
+
+function autoDeriveProfile(drugName, drugClass, drugSubclass) {
+  const name = drugName.toLowerCase();
+  const profile = {
+    is_nti: NTI_DRUGS.has(name),
+    requires_tdm: TDM_REQUIRED.has(name),
+    abuse_potential: HIGH_ABUSE.has(name) ? 'high' : 'none',
+    is_specialist_only: SPECIALIST_ONLY_CLASSES.has(drugClass) || drugSubclass === 'Cytotoxic Agent',
+    route: 'oral',
+    self_admin: true,
+    requires_diagnosis: REQUIRES_DIAG_CLASSES.has(drugSubclass) || drugSubclass === 'Insulin' || drugSubclass === 'Antiviral',
+    pregnancy_category: 'C',
+    typical_duration: 'varies',
+    has_generic: true,
+    okt_pillars: []
+  };
+
+  // Route inference from subclass
+  if (drugSubclass && (drugSubclass.includes('Topical') || drugSubclass.includes('Dermatological') || drugSubclass.includes('Ophthalmic'))) {
+    profile.route = 'topical';
+  } else if (drugSubclass === 'General Anesthetic' || drugSubclass === 'Local Anesthetic' || 
+             drugSubclass === 'Neuromuscular Blocker') {
+    profile.route = 'injectable';
+    profile.self_admin = false;
+  } else if (drugSubclass === 'Insulin') {
+    profile.route = 'injectable';
+    profile.self_admin = true;
+    profile.requires_diagnosis = true;
+  } else if (drugSubclass === 'Vasopressor/Inotrope' || drugSubclass === 'Thrombolytic' ||
+             drugSubclass === 'Anticoagulant (Parenteral)') {
+    profile.route = 'injectable';
+    profile.self_admin = false;
+  } else if (drugSubclass === 'Inhaled Corticosteroid/Combination' || drugSubclass === 'Bronchodilator') {
+    profile.route = 'inhaled';
+    profile.self_admin = true;
+  }
+
+  // Pregnancy category inference
+  const pregD = ['ACE Inhibitor', 'Angiotensin Receptor Blocker', 'Statin'];
+  const pregX = ['Statin', 'Warfarin'];
+  if (drugSubclass && pregD.includes(drugSubclass)) profile.pregnancy_category = 'D';
+  if (drugSubclass && pregX.includes(drugSubclass)) profile.pregnancy_category = 'X';
+  if (drugSubclass === 'Anticoagulant/Antiplatelet') profile.pregnancy_category = 'X';
+
+  // OKT pillar determination
   // Self-medication candidates
-  omeprazole: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'C',
-    typical_duration: '7-14 days', has_generic: true,
-    okt_pillars: ['self_medication'], max_self_medication_qty: 10, max_self_medication_days: 7
-  },
-  ranitidine: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'B',
-    typical_duration: '7-14 days', has_generic: true,
-    okt_pillars: ['self_medication'], max_self_medication_qty: 10, max_self_medication_days: 7
-  },
-  'mefenamic acid': {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'C',
-    typical_duration: '3-7 days', has_generic: true,
-    okt_pillars: ['self_medication'], max_self_medication_qty: 12, max_self_medication_days: 5
-  },
-  salbutamol: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'low',
-    is_specialist_only: false, route: 'inhaled', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'C',
-    typical_duration: 'as needed', has_generic: true,
-    okt_pillars: ['self_medication'],
-    note: 'Mild intermittent asthma only; requires pharmacist ability to assess severity',
-    restrictions: { max_device: '1 inhaler', counseling_required: true }
-  },
+  if (drugSubclass === 'NSAID' || drugSubclass === 'Antacid/Antiulcer' || drugSubclass === 'Antihistamine' ||
+      drugSubclass === 'Antiallergic' || drugSubclass === 'Antiemetic' || drugSubclass === 'Laxative' ||
+      drugSubclass === 'Antidiarrheal' || drugSubclass === 'Antifungal' ||
+      drugSubclass === 'Mucolytic' || drugSubclass === 'Decongestant' ||
+      drugSubclass === 'Bronchodilator' || drugSubclass === 'Antihistamine' ||
+      drugSubclass === 'Vestibular Agent' || drugSubclass === 'Anthelmintic' ||
+      drugSubclass === 'Antimalarial' || drugSubclass === 'Vitamin/Mineral Supplement') {
+    profile.okt_pillars.push('self_medication');
+  }
 
   // Chronic refill candidates
-  amlodipine: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'C',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30, requires_bp_monitoring: true }
-  },
-  captopril: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'D',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30,
-      requires_bp_monitoring: true, pregnancy_warning: true }
-  },
-  metformin: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'B',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30,
-      requires_bg_monitoring: true, stable_dose_required: true }
-  },
-  simvastatin: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'X',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30,
-      pregnancy_exclusion: true, pregnancy_screening_required: true }
-  },
-  levothyroxine: {
-    is_nti: false, requires_tdm: true, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'A',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30,
-      stable_dose_required: true, tdm_available_at_pharmacy: true }
-  },
-  allopurinol: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'C',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30, stable_dose_required: true }
-  },
-  insulin: {
-    is_nti: true, requires_tdm: true, abuse_potential: 'none',
-    is_specialist_only: false, route: 'injectable', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'B',
-    typical_duration: 'chronic (lifelong)', has_generic: true,
-    okt_pillars: ['chronic_refill'],
-    restrictions: { previous_prescription_required: true, max_duration_days: 30,
-      tdm_available: true, note: 'Insulin is NTI but self-admin; pharmacist must verify BG monitoring competence' }
-  },
-
-  // Topical candidates
-  'clindamycin topical': {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'topical', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'B',
-    typical_duration: '8-12 weeks', has_generic: true,
-    okt_pillars: ['topical'],
-    restrictions: { max_qty: '1 tube 30g', indication: 'acne vulgaris' }
-  },
-  'ketoconazole cream': {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'topical', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'C',
-    typical_duration: '2-4 weeks', has_generic: true,
-    okt_pillars: ['topical'],
-    restrictions: { max_qty: '1 tube', indication: 'superficial fungal infection' }
-  },
-  'acyclovir cream': {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'topical', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'B',
-    typical_duration: '5 days', has_generic: true,
-    okt_pillars: ['topical'],
-    restrictions: { max_qty: '1 tube', indication: 'herpes labialis (cold sores)' }
-  },
-  'mupirocin': {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'topical', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'B',
-    typical_duration: '5-10 days', has_generic: true,
-    okt_pillars: ['topical'],
-    restrictions: { max_qty: '1 tube 15g', indication: 'impetigo, folliculitis (limited area)' }
-  },
-  'diclofenac gel': {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'topical', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'C',
-    typical_duration: '7-14 days', has_generic: true,
-    okt_pillars: ['topical'],
-    restrictions: { max_qty: '1 tube', indication: 'musculoskeletal pain' }
-  },
-
-  // ── NSAID oral for self-medication / pain ──
-  meloxicam: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'C',
-    typical_duration: '7-14 days', has_generic: true,
-    okt_pillars: ['self_medication'],
-    max_self_medication_qty: 10, max_self_medication_days: 7,
-    note: 'NSAID for short-term musculoskeletal pain, dysmenorrhea. Risk of GI/cardiac AEs requires pharmacist counseling on contraindications.',
-    restrictions: { max_duration_days: 7, max_tablets: 10, counseling_required: true, contraindication_screening: ['gastric_ulcer', 'ckd', 'pregnancy'] }
-  },
-  diclofenac: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: false, pregnancy_category: 'C',
-    typical_duration: '3-7 days', has_generic: true,
-    okt_pillars: ['self_medication'],
-    max_self_medication_qty: 10, max_self_medication_days: 5,
-    note: 'Oral NSAID. Same restrictions as meloxicam - GI/cardiac risk screening by pharmacist required.',
-    restrictions: { max_duration_days: 5, counseling_required: true, contraindication_screening: ['gastric_ulcer', 'ckd', 'pregnancy'] }
-  },
-
-  // REJECTED examples (for testing)
-  warfarin: {
-    is_nti: true, requires_tdm: true, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'X',
-    typical_duration: 'chronic', has_generic: true,
-    okt_pillars: [],
-    rejection_reasons: ['NTI', 'requires_INR_monitoring', 'pregnancy_X']
-  },
-  digoxin: {
-    is_nti: true, requires_tdm: true, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'C',
-    typical_duration: 'chronic', has_generic: true,
-    okt_pillars: [],
-    rejection_reasons: ['NTI', 'requires_TDM']
-  },
-  phenytoin: {
-    is_nti: true, requires_tdm: true, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'D',
-    typical_duration: 'chronic', has_generic: true,
-    okt_pillars: [],
-    rejection_reasons: ['NTI', 'requires_TDM']
-  },
-  morphine: {
-    is_nti: true, requires_tdm: false, abuse_potential: 'high',
-    is_specialist_only: false, route: 'injectable', self_admin: false,
-    requires_diagnosis: true, pregnancy_category: 'C',
-    typical_duration: 'short-term', has_generic: true,
-    okt_pillars: [],
-    rejection_reasons: ['narcotic_exclusion', 'high_abuse_potential', 'injectable']
-  },
-  diazepam: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'high',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'D',
-    typical_duration: 'short-term', has_generic: true,
-    okt_pillars: [],
-    rejection_reasons: ['psychotropic_exclusion']
-  },
-  amoxicillin: {
-    is_nti: false, requires_tdm: false, abuse_potential: 'none',
-    is_specialist_only: false, route: 'oral', self_admin: true,
-    requires_diagnosis: true, pregnancy_category: 'B',
-    typical_duration: '5-10 days', has_generic: true,
-    okt_pillars: [],
-    rejection_reasons: ['requires_diagnosis_antibiotic', 'amr_concern'],
-    note: 'Antibiotics require confirmed bacterial infection; dispensing without prescription contributes to AMR'
+  if (CHRONIC_REFILL_CLASSES.has(drugClass) || 
+      drugSubclass === 'Anticoagulant/Antiplatelet' || drugSubclass === 'Statin' ||
+      drugSubclass === 'Fibrate' || drugSubclass === 'Oral Antidiabetic' || drugSubclass === 'Insulin' ||
+      drugSubclass === 'Thyroid Agent' || drugSubclass === 'Benign Prostatic Hyperplasia' ||
+      drugSubclass === 'Erectile Dysfunction' || drugSubclass === 'Contraceptive' ||
+      drugSubclass === 'Hormone Therapy' || drugSubclass === 'Overactive Bladder' ||
+      drugSubclass === 'Antipsychotic' || drugSubclass === 'Antidepressant' ||
+      drugSubclass === 'Anxiolytic/Sedative' || drugSubclass === 'Antiepileptic' ||
+      drugSubclass === 'Central Antihypertensive' || drugSubclass === 'Antianginal' ||
+      drugSubclass === 'Antiarrhythmic' || drugSubclass === 'Antigout') {
+    profile.okt_pillars.push('chronic_refill');
   }
+
+  // Topical candidates — expanded to include druSubclass names containing 'Topical' and common topical classes
+  if (TOPICAL_CLASSES.has(drugClass) || profile.route === 'topical' ||
+      drugSubclass === 'Topical Corticosteroid' || drugSubclass === 'Topical Anti-infective' ||
+      drugSubclass === 'Ophthalmic Agent' || drugSubclass === 'Vestibular Agent' ||
+      drugSubclass === 'Antifungal' || drugSubclass === 'Antibacterial (Topical)' ||
+      drugSubclass === 'Dermatological' || drugSubclass === 'Emollient/Protective') {
+    profile.okt_pillars.push('topical');
+  }
+
+  // Blocked: narcotic analgesics are in okt_pillars but will be rejected by SAFE-03
+  return profile;
+}
+
+// ── Drug lookup ──
+const NAME_ALIASES = {
+  'digoxin': 'digoksin', 'omeprazole': 'omeprazol', 'amoxicillin': 'amoksisilin', 'amoxycillin': 'amoksisilin',
+  'ciprofloxacin': 'siprofloksasin', 'acyclovir': 'asiklovir', 'levothyroxine': 'levotiroksin',
+  'phenytoin': 'fenitoin', 'phenobarbital': 'fenobarbital', 'carbamazepine': 'karbamazepin',
+  'valproic acid': 'valproat', 'fluoxetine': 'fluoksetin', 'haloperidol': 'haloperidol',
+  'chlorpromazine': 'klorpromazin', 'risperidone': 'risperidon', 'methotrexate': 'metotreksat',
+  'cyclophosphamide': 'siklofosfamid', 'doxorubicin': 'doksorubisin', 'vincristine': 'vinkristin',
+  'cisplatin': 'sisplatin', 'carboplatin': 'karboplatin', 'paclitaxel': 'paklitaksel',
+  'gemcitabine': 'gemsitabin', 'azathioprine': 'azatioprin', 'mercaptopurine': 'merkaptopurin',
+  'busulfan': 'busulfan', 'melphalan': 'melfalan', 'chlorambucil': 'klorambusil',
+  'enalapril': 'enalapril', 'lisinopril': 'lisinopril', 'captopril': 'kaptopril',
+  'simvastatin': 'simvastatin', 'atorvastatin': 'atorvastatin', 'rosuvastatin': 'rosuvastatin',
+  'metformin': 'metformin', 'glimepiride': 'glimepirid', 'glipizide': 'glipizid',
+  'gliclazide': 'gliklazid', 'glibenclamide': 'glibenklamid', 'prednisone': 'prednison',
+  'prednisolone': 'prednisolon', 'dexamethasone': 'deksametason', 'hydrocortisone': 'hidrokortison',
+  'gentamicin': 'gentamisin', 'amikacin': 'amikasin', 'streptomycin': 'streptomisin',
+  'tobramycin': 'tobramisin', 'vancomycin': 'vankomisin', 'erythromycin': 'eritromisin',
+  'azithromycin': 'azitromisin', 'clarithromycin': 'klaritromisin', 'spiramycin': 'spiramisin',
+  'cephalexin': 'sefaleksin', 'cefadroxil': 'sefadroksil', 'cefazolin': 'sefazolin',
+  'cefotaxime': 'sefotaksim', 'ceftriaxone': 'seftriakson', 'ceftazidime': 'seftazidim',
+  'cefoperazone': 'sefoperazon', 'cefepime': 'sefepim', 'cefpirome': 'sefpirom',
+  'cefixime': 'sefiksim', 'cefuroxime': 'sefuroksim', 'salbutamol': 'salbutamol',
+  'albuterol': 'salbutamol', 'fenoterol': 'fenoterol', 'ipratropium': 'ipratropium',
+  'nitroglycerin': 'gliseril trinitrat', 'isosorbide dinitrate': 'isosorbid dinitrat',
+  'furosemide': 'furosemid', 'spironolactone': 'spironolakton', 'hydrochlorothiazide': 'hidroklorotiazid',
+  'alprazolam': 'alprazolam', 'diazepam': 'diazepam', 'lorazepam': 'lorazepam',
+  'clobazam': 'klobazam', 'clonazepam': 'klonazepam', 'phenobarbital': 'fenobarbital',
+  'metoclopramide': 'metoklopramid', 'ondansetron': 'ondansetron', 'omeprazole': 'omeprazol',
+  'lansoprazole': 'lansoprazol', 'pantoprazole': 'pantoprazol', 'ketoconazole': 'ketokonazol',
+  'fluconazole': 'flukonazol', 'itraconazole': 'itrakonazol', 'voriconazole': 'vorikonazol',
+  'isotretinoin': 'asam retinoat', 'tretinoin': 'asam retinoat',
+  'acetylsalicylic acid': 'asam asetilsalisilat', 'aspirin': 'asam asetilsalisilat',
+  'mefenamic acid': 'asam mefenamat', 'valproate': 'valproat',
+  'diclofenac': 'natrium diklofenak', 'ketoprofen': 'ketoprofen', 'ketorolac': 'ketorolak',
+  'meloxicam': 'meloksikam', 'celecoxib': 'selekoksib', 'allopurinol': 'alopurinol',
+  'colchicine': 'kolkisin', 'probenecid': 'probenesid', 'levofloxacin': 'levofloksasin',
+  'moxifloxacin': 'moksifloksasin', 'ofloxacin': 'ofloksasin', 'doxycycline': 'doksisiklin',
+  'tetracycline': 'tetrasiklin', 'minocycline': 'minosiklin', 'clindamycin': 'klindamisin',
+  'metronidazole': 'metronidazol', 'isoniazid': 'isoniazid', 'rifampicin': 'rifampisin',
+  'pyrazinamide': 'pirazinamid', 'ethambutol': 'etambutol', 'amphotericin b': 'amfoterisin b',
+  'griseofulvin': 'griseofulvin', 'terbinafine': 'terbinafin', 'artesunate': 'artesunat',
+  'quinine': 'kuinin', 'primaquine': 'primakuin', 'praziquantel': 'prazikuantel',
+  'albendazole': 'albendazol', 'mebendazole': 'mebendazol', 'ivermectin': 'ivermektin',
+  'levonorgestrel': 'levonorgestrel', 'desogestrel': 'desogestrel', 'etonogestrel': 'etonogestrel',
+  'medroxyprogesterone': 'medroksi progesteron asetat', 'estrogen conjugate': 'estrogen terkonjugasi',
+  'sildenafil': 'sildenafil', 'tadalafil': 'tadalafil', 'finasteride': 'finasterid',
+  'dutasteride': 'dutasterid', 'doxazosin': 'doksazosin', 'terazosin': 'terazosin',
+  'tamsulosin': 'tamsulosin', 'timolol': 'betaksolol', 'levodopa': 'levodopa',
+  'morphine': 'morfin', 'codeine': 'kodein', 'fentanyl': 'fentanil', 'pethidine': 'petidin',
+  'oxycodone': 'oksikodon', 'sufentanil': 'sufentanil', 'remifentanil': 'remifentanil',
+  'hydromorphone': 'hidromorfon', 'methadone': 'metadon', 'tramadol': 'tramadol',
+  'propofol': 'propofol', 'ketamine': 'ketamin', 'thiopental': 'tiopental',
+  'warfarin': 'warfarin', 'clopidogrel': 'klopidogrel', 'ticagrelor': 'tikagrelor',
+  'enoxaparin': 'enoxaparin', 'nadroparin': 'nadroparin', 'fondaparinux': 'fondaparinuks',
+  'insulin glargine': 'insulin glargine', 'insulin detemir': 'insulin detemir',
+  'insulin aspart': 'insulin aspart', 'insulin lispro': 'insulin lispro',
+  'insulin glulisine': 'insulin glulisin', 'insulin degludec': 'insulin degludek',
 };
 
-// ─────────────────────────────────────────────────────────
-// Fuzzy drug lookup (case-insensitive, partial match)
-// ─────────────────────────────────────────────────────────
 function findDrug(query) {
-  const q = query.toLowerCase().trim();
-  // Direct match
-  if (DRUG_PROFILES[q]) return { key: q, ...DRUG_PROFILES[q] };
-  // Partial match against known keys
-  const keys = Object.keys(DRUG_PROFILES).filter(k => k.includes(q) || q.includes(k));
-  if (keys.length === 1) return { key: keys[0], ...DRUG_PROFILES[keys[0]] };
-  // Search in database.json
+  let q = query.toLowerCase().trim();
   const db = loadDB();
   const cat = db.drug_catalog.therapeutic_classes;
-  const results = [];
+  
+  // Try English-to-Indonesian alias (exact match first)
+  if (NAME_ALIASES[q]) q = NAME_ALIASES[q];
+  // Try first word after stripping qualifiers like "cream", "gel", "tablet", etc.
+  if (!NAME_ALIASES[q]) {
+    const words = q.split(/\s+/);
+    const baseWord = words[0].replace(/[^a-z]/g, '');
+    if (NAME_ALIASES[baseWord]) q = NAME_ALIASES[baseWord];
+  }
+  
+  const all = db.drug_catalog.all_drugs || [];
+  
+  // Exact match
+  for (const d of all) {
+    if (d.name.toLowerCase() === q) {
+      return { ...d, profile: autoDeriveProfile(d.name, d.class, d.subclass) };
+    }
+  }
+  
+  // Partial match
+  for (const d of all) {
+    if (d.name.toLowerCase().includes(q) || q.includes(d.name.toLowerCase())) {
+      return { ...d, profile: autoDeriveProfile(d.name, d.class, d.subclass) };
+    }
+  }
+  
+  // Search in therapeutic_classes
   for (const [ck, cd] of Object.entries(cat)) {
     if (cd.subclasses) {
       for (const [sk, sd] of Object.entries(cd.subclasses)) {
         for (const ex of (sd.examples || [])) {
           if (ex.toLowerCase().includes(q)) {
-            // Check if we have a profile for this drug
-            const pKey = ex.toLowerCase();
-            const profile = DRUG_PROFILES[pKey];
-            results.push({ key: ex, class: cd.class, classification: cd.classification, profile });
+            const profile = autoDeriveProfile(ex, cd.class, sd.subclass);
+            return { name: ex, class: cd.class, subclass: sd.subclass, classification: 'Obat Keras', profile, _foundIn: ck };
           }
         }
       }
     }
   }
-  if (results.length > 0) {
-    return { key: results[0].key, classification: results[0].classification, ...results[0].profile, _foundIn: results[0].class };
-  }
+  
   return null;
 }
 
-// ─────────────────────────────────────────────────────────
-// Classification resolver
-// ─────────────────────────────────────────────────────────
+// ── Classification resolver ──
 function resolveClassification(drugInfo, drugName) {
-  if (drugInfo && drugInfo.classification) {
-    const c = drugInfo.classification.toLowerCase();
-    // Handle mixed classification strings like "Obat Keras / Obat Wajib Apotek"
-    if (c.includes('narkotika')) return 'narkotika';
-    if (c.includes('psikotropika')) return 'psikotropika';
-    if (c.includes('obat bebas terbatas') || c === 'obat_bebas_terbatas') return 'obat_bebas_terbatas';
-    if (c.includes('obat bebas') || c === 'obat_bebas') return 'obat_bebas';
-    if (c.includes('obat keras')) return 'obat_keras';
-    return c;
-  }
-  // Generic classification by drug name patterns
   const name = drugName.toLowerCase();
-  const narcs = ['morphine', 'fentanyl', 'codeine', 'pethidine', 'oxycodone', 'heroin', 'cocaine'];
+  const narcs = ['morfin', 'fentanil', 'kodein', 'petidin', 'oksikodon', 'sufentanil', 'remifentanil', 'hidromorfon', 'metadon'];
   if (narcs.some(n => name.includes(n))) return 'narkotika';
-  const psychs = ['diazepam', 'alprazolam', 'lorazepam', 'clobazam', 'phenobarbital', 'methylphenidate',
-    'nitrazepam', 'bromazepam', 'zolpidem', 'haloperidol', 'risperidone', 'olanzapine', 'fluoxetine'];
+  const psychs = ['diazepam', 'alprazolam', 'lorazepam', 'klobazam', 'fenobarbital', 'metilfenidat',
+    'klonazepam', 'haloperidol', 'risperidon', 'olanzapin', 'fluoksetin', 'klorpromazin', 'trifluoperazin', 'quetiapin'];
   if (psychs.some(p => name.includes(p))) return 'psikotropika';
   return 'obat_keras';
 }
@@ -322,29 +230,24 @@ function normalizeClassification(raw) {
   const s = String(raw).toLowerCase();
   if (s.includes('narkotika')) return 'narkotika';
   if (s.includes('psikotropika')) return 'psikotropika';
-  if (s.includes('obat bebas terbatas') || s === 'obat_bebas_terbatas') return 'obat_bebas_terbatas';
-  if (s.includes('obat bebas') || s === 'obat_bebas') return 'obat_bebas';
+  if (s.includes('obat bebas') || s === 'obat_bebas' || s === 'obat_bebas_terbatas') return 'obat_bebas';
   if (s.includes('obat keras') || s.includes('obat_keras')) return 'obat_keras';
   return s;
 }
 
-// ─────────────────────────────────────────────────────────
-// Core OKT evaluation
-// ─────────────────────────────────────────────────────────
+// ── Core OKT evaluation ──
 function evaluateOKT(drugName, context = 'auto') {
   const rules = loadRules();
   const startTime = Date.now();
-
-  // Flatten the rules for easy reference
   const exclusions = rules.hard_exclusions.rules;
   const pillars = rules.eligibility_pillars.pillars;
   const safetyGates = rules.safety_gates.gates;
 
-  // Look up drug in profiles, then in database
   const drugInfo = findDrug(drugName);
-  const rawClassification = drugInfo && drugInfo.classification
-    ? drugInfo.classification
-    : resolveClassification(drugInfo, drugName);
+  // Always check name patterns for narcotic/psychotropic classification  
+  const nameBasedClass = resolveClassification(null, drugInfo ? drugInfo.name : drugName);
+  const rawClassification = nameBasedClass !== 'obat_keras' ? nameBasedClass
+    : (drugInfo ? drugInfo.classification : 'obat_keras');
   const classification = normalizeClassification(rawClassification);
 
   const result = {
@@ -364,172 +267,92 @@ function evaluateOKT(drugName, context = 'auto') {
   if (classification === 'narkotika') {
     result.eligibility = 'REJECTED';
     result.grounds.push('EXCL-001');
-    result.gate_results.push({ gate: 'EXCL-001', name: 'Narcotics Exclusion', status: 'FAIL', detail: 'Narcotics are strictly off-limits for pharmacist dispensing' });
-    result.rationale.push('Narkotika (narcotics) are explicitly excluded per Pasal 78(6) Permenkes 5/2026');
+    result.gate_results.push({ gate: 'EXCL-001', name: 'Narcotics Exclusion', status: 'FAIL', detail: 'Narcotics strictly off-limits' });
+    result.rationale.push('Narkotika are excluded per Pasal 78(6) Permenkes 5/2026');
     result.execution_time_ms = Date.now() - startTime;
     return result;
   }
   if (classification === 'psikotropika') {
     result.eligibility = 'REJECTED';
     result.grounds.push('EXCL-002');
-    result.gate_results.push({ gate: 'EXCL-002', name: 'Psychotropics Exclusion', status: 'FAIL', detail: 'Psychotropics are strictly off-limits for pharmacist dispensing' });
-    result.rationale.push('Psikotropika are explicitly excluded per Pasal 78(6) Permenkes 5/2026');
+    result.gate_results.push({ gate: 'EXCL-002', name: 'Psychotropics Exclusion', status: 'FAIL', detail: 'Psychotropics strictly off-limits' });
+    result.rationale.push('Psikotropika are excluded per Pasal 78(6) Permenkes 5/2026');
     result.execution_time_ms = Date.now() - startTime;
     return result;
   }
-  if (classification === 'obat_bebas' || classification === 'obat_bebas_terbatas') {
+  if (classification === 'obat_bebas') {
     result.eligibility = 'NOT_APPLICABLE';
     result.grounds.push('EXCL-003');
-    result.gate_results.push({ gate: 'EXCL-003', name: 'Already Non-Prescription', status: 'SKIP', detail: 'Drug is already available without prescription' });
-    result.rationale.push('This drug is already classified as non-prescription; OKT rules do not apply');
-    result.execution_time_ms = Date.now() - startTime;
-    return result;
-  }
-  if (classification !== 'obat_keras') {
-    result.eligibility = 'UNKNOWN';
-    result.rationale.push(`Cannot determine classification for '${drugName}'`);
+    result.gate_results.push({ gate: 'EXCL-003', name: 'Already Non-Prescription', status: 'SKIP', detail: 'Drug is OTC' });
     result.execution_time_ms = Date.now() - startTime;
     return result;
   }
 
-  // ── Gate 1: Safety Check ──
+  // ── Auto-derive profile from class ──
+  const profile = drugInfo && drugInfo.profile ? drugInfo.profile : autoDeriveProfile(drugName, 'Unknown', 'Unknown');
+  result._found_in = drugInfo ? (drugInfo.class || 'Unknown') : 'Not in database';
+
+  // ── Safety Gates ──
   let safetyPass = true;
   const safetyResults = [];
 
-  if (drugInfo) {
-    for (const gate of safetyGates) {
-      const gId = gate.id;
-      let conditionMet = false;
+  for (const gate of safetyGates) {
+    const gId = gate.id;
+    let conditionMet = false;
 
-      // Evaluate conditions based on gate logic
-      switch (gId) {
-        case 'SAFE-01':
-          conditionMet = drugInfo.is_nti === true;
-          break;
-        case 'SAFE-02':
-          conditionMet = drugInfo.requires_tdm === true;
-          break;
-        case 'SAFE-03':
-          conditionMet = drugInfo.abuse_potential === 'high';
-          break;
-        case 'SAFE-04':
-          conditionMet = drugInfo.is_specialist_only === true;
-          break;
-        case 'SAFE-05':
-          conditionMet = drugInfo.route === 'injectable' && drugInfo.self_admin !== true;
-          break;
-        case 'SAFE-06':
-          conditionMet = drugInfo.requires_diagnosis === true && context === 'self_medication';
-          break;
-        case 'SAFE-07':
-          conditionMet = ['D', 'X'].includes(drugInfo.pregnancy_category) && context === 'self_medication';
-          break;
-        default:
-          conditionMet = false;
-      }
-
-      if (conditionMet) {
-        safetyPass = false;
-        const detail = gate.examples
-          ? `${gate.name}: matches pattern (examples: ${gate.examples.slice(0, 3).join(', ')})`
-          : `${gate.name}: condition triggered`;
-        safetyResults.push({ gate: gId, name: gate.name, status: 'FAIL', detail });
-        result.rationale.push(`REJECTED by ${gate.name}: ${gate.rationale}`);
-      } else {
-        safetyResults.push({ gate: gId, name: gate.name, status: 'PASS', detail: 'No issue detected' });
-      }
+    switch (gId) {
+      case 'SAFE-01': conditionMet = profile.is_nti; break;
+      case 'SAFE-02': conditionMet = profile.requires_tdm; break;
+      case 'SAFE-03': conditionMet = profile.abuse_potential === 'high'; break;
+      case 'SAFE-04': conditionMet = profile.is_specialist_only; break;
+      case 'SAFE-05': conditionMet = profile.route === 'injectable' && !profile.self_admin; break;
+      case 'SAFE-06': conditionMet = profile.requires_diagnosis && context === 'self_medication'; break;
+      case 'SAFE-07': conditionMet = ['D', 'X'].includes(profile.pregnancy_category) && context === 'self_medication'; break;
     }
-  } else {
-    // No drug profile available - conservative approach
-    result.rationale.push('No detailed profile available for this drug; conservative assessment applied');
-    // Still check for generic safety patterns
-    const name = drugName.toLowerCase();
-    const ntiDrugs = ['warfarin', 'digoxin', 'phenytoin', 'lithium', 'theophylline', 'carbamazepine', 'valproic', 'cyclosporine', 'tacrolimus'];
-    if (ntiDrugs.some(d => name.includes(d))) {
+
+    if (conditionMet) {
       safetyPass = false;
-      safetyResults.push({ gate: 'SAFE-01', name: 'Narrow Therapeutic Index', status: 'FAIL', detail: `${drugName} recognized as NTI drug` });
+      safetyResults.push({ gate: gId, name: gate.name, status: 'FAIL', detail: `${gate.name}: profile triggered rejection` });
+      result.rationale.push(`REJECTED by ${gate.name}`);
+    } else {
+      safetyResults.push({ gate: gId, name: gate.name, status: 'PASS', detail: 'Safe' });
     }
   }
 
   result.gate_results = safetyResults;
 
-  // ── Gate 2: Pillar Eligibility ──
+  // ── Pillar Evaluation ──
   const eligiblePillars = [];
-  const pillarResults = [];
+  const pillarKeys = context === 'auto' ? profile.okt_pillars : profile.okt_pillars.filter(p => p === context);
 
-  if (drugInfo && drugInfo.okt_pillars) {
-    const info = drugInfo;
-    // Context filter
-    const pillarKeys = context === 'auto' ? info.okt_pillars : info.okt_pillars.filter(p => p === context);
-
-    for (const pKey of pillarKeys) {
-      const pillar = pillars[pKey];
-      if (!pillar) continue;
-
-      // Score how many criteria are satisfied
-      const criteria = pillar.criteria || [];
-      const satisfiedCount = criteria.length; // Assume all satisfied if profile indicates this pillar
-      const totalCount = criteria.length;
-
-      // For chronic refill, verify previous prescription requirement
-      if (pKey === 'chronic_refill' && info.restrictions && info.restrictions.previous_prescription_required) {
-        eligiblePillars.push({
-          pillar: pKey,
-          name: pillar.name,
-          status: 'CONDITIONAL',
-          score: `${satisfiedCount}/${totalCount}`,
-          conditions: ['Previous valid prescription required', 'Patient must be stable on current dose']
-        });
-      } else if (pKey === 'self_medication') {
-        eligiblePillars.push({
-          pillar: pKey,
-          name: pillar.name,
-          status: 'ELIGIBLE',
-          score: `${satisfiedCount}/${totalCount}`,
-          conditions: ['Short-term use only', 'Limited quantity']
-        });
-      } else if (pKey === 'topical') {
-        eligiblePillars.push({
-          pillar: pKey,
-          name: pillar.name,
-          status: 'ELIGIBLE',
-          score: `${satisfiedCount}/${totalCount}`,
-          conditions: ['Local use only', 'Limited area for potent agents']
-        });
-      }
-    }
+  for (const pKey of pillarKeys) {
+    const pillar = pillars[pKey];
+    if (!pillar) continue;
+    eligiblePillars.push({
+      pillar: pKey, name: pillar.name, status: 'ELIGIBLE',
+      score: `${(pillar.criteria || []).length}/${(pillar.criteria || []).length}`,
+      conditions: pillar.criteria
+    });
   }
 
   // ── Decision ──
   if (!safetyPass) {
     result.eligibility = 'REJECTED';
-    result.rationale.unshift('FAILED safety gates - cannot be dispensed without prescription');
-    result.restrictions = {};
+    result.rationale.unshift('FAILED safety gates');
   } else if (eligiblePillars.length === 0) {
     result.eligibility = 'REJECTED';
-    result.rationale.unshift('Does not meet any OKT eligibility pillar (self-medication, chronic refill, or topical)');
-    result.rationale.push('This drug requires a valid doctor\'s prescription');
-    result.restrictions = {};
+    result.rationale.unshift('No OKT pillar matched');
+    result.rationale.push('Requires prescription');
   } else {
-    // Passes both safety and at least one pillar
     result.eligibility = eligiblePillars.some(p => p.status === 'CONDITIONAL') ? 'CONDITIONAL' : 'ELIGIBLE';
     result.grounds = eligiblePillars.map(p => p.pillar);
-    result.restrictions = {};
-
     for (const ep of eligiblePillars) {
       const limitsKey = ep.pillar === 'self_medication' ? 'self_medication_limits'
-        : ep.pillar === 'chronic_refill' ? 'chronic_refill_limits'
-        : 'topical_limits';
+        : ep.pillar === 'chronic_refill' ? 'chronic_refill_limits' : 'topical_limits';
       const limits = rules.default_restrictions[limitsKey] || {};
       Object.assign(result.restrictions, limits);
-
-      // Merge drug-specific restrictions
-      if (drugInfo && drugInfo.restrictions) {
-        Object.assign(result.restrictions, drugInfo.restrictions);
-      }
     }
-
-    result.rationale.unshift(`PASSES OKT eligibility: ${eligiblePillars.map(p => p.name).join(', ')}`);
+    result.rationale.unshift(`PASSES OKT: ${eligiblePillars.map(p => p.name).join(', ')}`);
   }
 
   result.pillar_evaluation = eligiblePillars;
@@ -537,128 +360,67 @@ function evaluateOKT(drugName, context = 'auto') {
   return result;
 }
 
-// ─────────────────────────────────────────────────────────
-// CLI handler
-// ─────────────────────────────────────────────────────────
+// ── CLI ──
 function printResult(result) {
-  const statusColor = {
-    'ELIGIBLE': '\x1b[32m',     // green
-    'CONDITIONAL': '\x1b[33m',  // yellow
-    'REJECTED': '\x1b[31m',     // red
-    'NOT_APPLICABLE': '\x1b[36m', // cyan
-    'UNKNOWN': '\x1b[35m'       // magenta
-  }[result.eligibility] || '\x1b[0m';
+  const color = { 'ELIGIBLE': '\x1b[32m', 'CONDITIONAL': '\x1b[33m', 'REJECTED': '\x1b[31m', 'NOT_APPLICABLE': '\x1b[36m', 'UNKNOWN': '\x1b[35m' }[result.eligibility] || '';
   const reset = '\x1b[0m';
-
-  console.log(`\n╔═══════════════════════════════════════════════`);
-  console.log(`║  OKT DECISION REPORT`);
-  console.log(`╠═══════════════════════════════════════════════`);
-  console.log(`║  Drug:           ${result.drug}`);
-  console.log(`║  Classification: ${result.classification}`);
-  console.log(`║  Context:        ${result.requested_context}`);
-  console.log(`║  Eligibility:    ${statusColor}${result.eligibility}${reset}`);
-  console.log(`║  Time:           ${result.execution_time_ms}ms`);
-  console.log(`╠═══════════════════════════════════════════════`);
-
-  if (result.pillar_evaluation && result.pillar_evaluation.length) {
-    console.log(`║  Eligible Pillars:`);
-    for (const p of result.pillar_evaluation) {
-      console.log(`║    - ${p.name}: ${p.status} (${p.score})`);
-      for (const c of (p.conditions || [])) {
-        console.log(`║      . ${c}`);
-      }
-    }
-  }
-
-  console.log(`╠═══════════════════════════════════════════════`);
-  console.log(`║  Gate Results:`);
+  console.log(`\n${color}${result.eligibility}${reset}  ${result.drug.padEnd(25)} ${result.classification.padEnd(15)} ${result.requested_context.padEnd(15)} ${(result.grounds || []).join(', ').padEnd(20)} ${result.execution_time_ms}ms`);
   for (const g of result.gate_results) {
-    const gStatus = g.status === 'FAIL' ? '\x1b[31m✗\x1b[0m' : g.status === 'PASS' ? '\x1b[32m✓\x1b[0m' : '\x1b[36m-\x1b[0m';
-    console.log(`║    ${gStatus} ${g.gate}: ${g.name} - ${g.detail}`);
+    const sym = g.status === 'FAIL' ? '\x1b[31m\xe2\x9c\x97\x1b[0m' : g.status === 'PASS' ? '\x1b[32m\xe2\x9c\x93\x1b[0m' : '\x1b[36m-\x1b[0m';
+    console.log(`  ${sym} ${g.gate}: ${g.status}`);
   }
-
-  console.log(`╠═══════════════════════════════════════════════`);
-  console.log(`║  Rationale:`);
-  for (const r of result.rationale) {
-    console.log(`║    • ${r}`);
-  }
-
-  if (Object.keys(result.restrictions).length) {
-    console.log(`╠═══════════════════════════════════════════════`);
-    console.log(`║  Dispensing Restrictions:`);
-    for (const [k, v] of Object.entries(result.restrictions)) {
-      console.log(`║    ${k}: ${JSON.stringify(v)}`);
-    }
-  }
-  console.log(`╚═══════════════════════════════════════════════\n`);
+  for (const r of result.rationale) console.log(`  > ${r}`);
+  if (Object.keys(result.restrictions).length) console.log(`  Restrictions: ${JSON.stringify(result.restrictions)}`);
 }
 
 function printUsage() {
-  console.log(`
-OKT Decision Engine - Usage:
-  node okt-engine.js evaluate <drug_name> [context]
-  node okt-engine.js list
-  node okt-engine.js list-all
-
-Context:
-  self_medication  - Evaluate for self-medication (swamedikasi)
-  chronic_refill   - Evaluate for chronic disease refill (resep ulangan)
-  topical          - Evaluate as topical drug
-  auto             - Auto-detect (default)
-
-Examples:
-  node okt-engine.js evaluate Omeprazole
-  node okt-engine.js evaluate Amlodipine chronic_refill
-  node okt-engine.js evaluate Diazepam
-  node okt-engine.js list
-`);
+  console.log(`Usage:
+  node okt-engine.js evaluate <drug> [context]
+  node okt-engine.js list [class]
+  node okt-engine.js list-all`);
 }
 
-// ─────────────────────────────────────────────────────────
-// Main
-// ─────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
-if (args.length === 0) { printUsage(); process.exit(0); }
+if (!args.length) { printUsage(); process.exit(0); }
 
-switch (args[0]) {
+const useJson = args.includes('--json');
+const cleanArgs = args.filter(a => a !== '--json');
+
+switch (cleanArgs[0]) {
   case 'evaluate': {
-    if (!args[1]) { console.log('Error: provide a drug name'); printUsage(); process.exit(1); }
-    const ctx = args[2] || 'auto';
-    const result = evaluateOKT(args[1], ctx);
+    if (!cleanArgs[1]) { console.log('Error: provide drug name'); process.exit(1); }
+    const ctx = cleanArgs[2] || 'auto';
+    const result = evaluateOKT(cleanArgs[1], ctx);
     printResult(result);
-    // Also output JSON if requested
-    if (args.includes('--json')) {
-      console.log(JSON.stringify(result, null, 2));
-    }
+    if (useJson) console.log(JSON.stringify(result, null, 2));
     break;
   }
   case 'list': {
-    console.log('\nKnown drug profiles:');
-    for (const [key, val] of Object.entries(DRUG_PROFILES)) {
-      const pillars = (val.okt_pillars || []).join(', ') || '(none - will be rejected)';
-      const reject = val.rejection_reasons ? ` REJECT: ${val.rejection_reasons.join(', ')}` : '';
-      console.log(`  - ${key} [${pillars}]${reject}`);
-    }
-    break;
-  }
-  case 'list-all': {
     const db = loadDB();
-    const cat = db.drug_catalog.therapeutic_classes;
-    console.log('\nAll drugs in database (checking OKT eligibility):\n');
-    for (const [ck, cd] of Object.entries(cat)) {
-      if (cd.subclasses) {
-        for (const [sk, sd] of Object.entries(cd.subclasses)) {
-          for (const ex of (sd.examples || [])) {
-            const result = evaluateOKT(ex, 'auto');
-            const badge = result.eligibility === 'ELIGIBLE' ? '✓' : result.eligibility === 'CONDITIONAL' ? '~' : '✗';
-            console.log(`  ${badge} ${ex.padEnd(35)} ${result.eligibility.padEnd(15)} ${(result.grounds || []).join(', ')}`);
-          }
+    const filter = args[1] ? args[1].toLowerCase() : '';
+    for (const [cls, cd] of Object.entries(db.drug_catalog.therapeutic_classes)) {
+      if (filter && !cls.toLowerCase().includes(filter)) continue;
+      console.log(`\n${cls}:`);
+      for (const [sub, sd] of Object.entries(cd.subclasses)) {
+        for (const ex of (sd.examples || [])) {
+          const r = evaluateOKT(ex, 'auto');
+          const badge = r.eligibility === 'ELIGIBLE' ? '\x1b[32m\u2713\x1b[0m' : r.eligibility === 'REJECTED' ? '\x1b[31m\u2717\x1b[0m' : '\x1b[33m~\x1b[0m';
+          console.log(`  ${badge} ${ex.padEnd(35)} ${r.eligibility.padEnd(12)} ${(r.grounds || []).join(', ')}`);
         }
       }
     }
     break;
   }
+  case 'list-all': {
+    const db = loadDB();
+    for (const d of db.drug_catalog.all_drugs) {
+      const r = evaluateOKT(d.name, 'auto');
+      const badge = r.eligibility === 'ELIGIBLE' ? '\x1b[32m\u2713\x1b[0m' : r.eligibility === 'REJECTED' ? '\x1b[31m\u2717\x1b[0m' : '\x1b[33m~\x1b[0m';
+      console.log(`  ${badge} ${d.name.padEnd(30)} ${r.eligibility.padEnd(12)} ${(r.grounds || []).join(', ').padEnd(25)} ${d.class || ''}`);
+    }
+    break;
+  }
   default:
-    console.log(`Unknown command: ${args[0]}`);
+    console.log(`Unknown: ${args[0]}`);
     printUsage();
 }

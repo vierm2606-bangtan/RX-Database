@@ -1,518 +1,3462 @@
 {
   "_metadata": {
-    "title": "Indonesian Prescription Drug Database",
-    "description": "Local database of prescription drugs in Indonesia based on UU 17/2023, PP 28/2024, and related regulations",
-    "version": "1.0.0",
+    "title": "Indonesian Prescription Drug Database - Fornas-based",
+    "description": "Comprehensive catalog of ~394 generic drugs from Formularium Nasional KMK 2197/2023 with OKT eligibility auto-derivation",
+    "version": "2.0.0",
     "last_updated": "2026-06-26",
-    "author": "Pharmacy Reference System",
-    "disclaimer": "This information is for reference, education, and workflow support only. It does not constitute medical advice and must not be used as the sole basis for clinical decisions. Consult qualified healthcare professionals and validated clinical systems for patient care."
+    "source": "KMK HK.01.07/MENKES/2197/2023 (Fornas 2023)",
+    "drug_count": 339,
+    "documented_at": "fornas-final-list.json",
+    "disclaimer": "This information is for reference, education, and workflow support only."
   },
   "regulatory_framework": {
     "primary_law": {
       "name": "Undang-Undang Nomor 17 Tahun 2023 tentang Kesehatan",
       "short": "UU 17/2023",
-      "description": "Primary health law; Article 320 classifies drugs into prescription drugs (obat dengan resep) and non-prescription drugs (obat tanpa resep)",
-      "prescription_drugs_defined": [
-        "Obat Keras (Potent/Prescription Drugs) - red circle with 'K'",
-        "Narkotika (Narcotics) - red circle with '+' symbol",
-        "Psikotropika (Psychotropics) - red circle with 'K'"
-      ]
+      "key_articles": [
+        "320(5) OKT pharmacist dispensing"
+      ],
+      "description": "Primary health law; classifies drugs into prescription and non-prescription categories"
     },
     "implementing_regulation": {
-      "name": "Peraturan Pemerintah Nomor 28 Tahun 2024 tentang Peraturan Pelaksanaan UU 17/2023",
+      "name": "Peraturan Pemerintah Nomor 28 Tahun 2024",
       "short": "PP 28/2024",
-      "description": "Detailed implementing regulation; Pasal 920-922 govern drug classification and prescription requirements",
-      "key_articles": {
-        "920": "Drug classification based on safety, risk of misuse, and method of administration",
-        "921": "Categories: prescription drugs (obat keras, narkotika, psikotropika) and non-prescription drugs (obat bebas, obat bebas terbatas)",
-        "922": "Prescription drugs may only be dispensed by pharmacists based on a valid prescription; exceptions for certain 'obat keras tertentu' (selected potent drugs) for self-medication, chronic disease refills, and topical use"
-      }
-    },
-    "ancillary_regulations": [
-      {
-        "name": "Keputusan Menteri Kesehatan No. 02396/A/SK/VIII/1986",
-        "description": "Established the red circle with 'K' marking for 'Obat Keras Daftar G' (Gevaarlijk = dangerous)"
-      },
-      {
-        "name": "Permenkes No. 917/MENKES/PER/X/1993",
-        "description": "Mandatory drug registration; established drug classification framework (obat bebas, obat bebas terbatas, obat wajib apotek, obat keras, psikotropika, narkotika)"
-      },
-      {
-        "name": "Permenkes No. 28 Tahun 2022",
-        "description": "Changes in classification, restrictions, and categories of medicines (e.g., reclassified terbinafine, famotidine, cetirizine from obat keras to obat bebas)"
-      },
-      {
-        "name": "Permenkes No. 10 Tahun 2022",
-        "description": "Classification and reclassification of psychotropic substances (Golongan I-IV)"
-      },
-      {
-        "name": "UU No. 35 Tahun 2009 tentang Narkotika",
-        "description": "Narcotics law; defines Narcotics Golongan I, II, III"
-      },
-      {
-        "name": "UU No. 5 Tahun 1997 tentang Psikotropika",
-        "description": "Psychotropics law; defines Psychotropics Golongan I-IV; non-dependent psychotropics fall under obat keras regulation"
-      },
-      {
-        "name": "PerBPOM No. 21 Tahun 2020 (jo. 13/2022)",
-        "description": "Drug registration criteria and procedures"
-      },
-      {
-        "name": "PerBPOM No. 7 Tahun 2024",
-        "description": "Good Manufacturing Practices (CPOB) standards"
-      },
-      {
-        "name": "KepKepBPOM No. 279 Tahun 2024",
-        "description": "Drug information standards (product information for patients)"
-      },
-      {
-        "name": "PerBPOM No. 9 Tahun 2024",
-        "description": "Guidelines for follow-up on supervision of drugs, narcotics, psychotropics, precursors, and addictive substances"
-      },
-      {
-        "name": "PerBPOM No. 14 Tahun 2024",
-        "description": "Online supervision of drugs and food"
-      }
-    ]
-  },
-  "drug_classification": {
-    "prescription_drugs": {
-      "description": "Only available with a valid prescription from a physician, dentist, or veterinarian",
-      "dispensing_rule": "Must be dispensed by a pharmacist (Apoteker) in pharmaceutical service facilities (apotek, RS, puskesmas, klinik)",
-      "penalty": "Up to 12 years imprisonment and/or IDR 5 billion fine for unauthorized distribution (Pasal 435 UU 17/2023)",
-      "categories": {
-        "obat_keras": {
-          "name": "Obat Keras (Prescription Drugs / Potent Drugs)",
-          "label": "Red circle with black 'K' (formerly 'Daftar G' - Gevaarlijk)",
-          "definition": "Drugs with high risk requiring medical supervision; potential for misuse and/or require specific administration methods",
-          "examples": [
-            "Antibiotics (amoxicillin, cefadroxil, ciprofloxacin, azithromycin)",
-            "Antihypertensives (amlodipine, captopril, valsartan, bisoprolol)",
-            "Antidiabetics (metformin, glimepiride, insulin, acarbose)",
-            "Lipid-lowering agents (simvastatin, atorvastatin, rosuvastatin)",
-            "Anticoagulants (warfarin, rivaroxaban, apixaban)",
-            "Corticosteroids (prednisone, dexamethasone, methylprednisolone)",
-            "Antidepressants (fluoxetine, sertraline, amitriptyline)",
-            "Antipsychotics (haloperidol, risperidone, olanzapine)",
-            "Antiepileptics (phenytoin, carbamazepine, valproic acid)",
-            "Chemotherapy agents",
-            "Hormonal therapies (levothyroxine, contraceptives requiring prescription)"
-          ]
-        },
-        "obat_keras_tertentu": {
-          "name": "Obat Keras Tertentu (Selected Potent Drugs - Exceptions)",
-          "label": "Same red circle 'K' but may be dispensed without prescription by pharmacist",
-          "regulation": "Pasal 320(5) UU 17/2023 jo. Pasal 922(2) PP 28/2024",
-          "criteria": [
-            "Drugs for self-medication (swamedikasi)",
-            "Drugs for chronic disease refills (resep ulangan)",
-            "Topical drugs"
-          ],
-          "examples_owa": [
-            "Antacids",
-            "Ranitidine (limited supply)",
-            "Mefenamic acid (limited)",
-            "Oral contraceptives (limited)",
-            "Certain antihistamines for limited indications"
-          ]
-        },
-        "narkotika": {
-          "name": "Narkotika (Narcotics)",
-          "label": "Red circle with black '+' (palang)",
-          "law": "UU No. 35 Tahun 2009",
-          "definition": "Substances from plants/synthetic/semi-synthetic that alter consciousness, reduce pain, and cause dependence",
-          "golongan": {
-            "I": {
-              "description": "Not for therapy; high dependence potential; for science only",
-              "examples": ["Heroin", "Cocaine", "Cannabis (Ganja)", "Meskaline", "MDMA (Ecstasy)", "LSD"]
-            },
-            "II": {
-              "description": "Therapeutic as last option; high dependence potential",
-              "examples": ["Morphine", "Fentanyl", "Pethidine", "Methadone", "Oxycodone", "Hydromorphone"]
-            },
-            "III": {
-              "description": "Therapeutic use; mild dependence potential",
-              "examples": ["Codeine", "Dihydrocodeine", "Ethylmorphine", "Buprenorphine", "Naloxone"]
-            }
-          },
-          "prescription_requirements": "Special prescription forms (blanko narkotika); time-limited dispensing"
-        },
-        "psikotropika": {
-          "name": "Psikotropika (Psychotropics)",
-          "label": "Red circle with 'K' (same as obat keras, but with additional regulatory controls)",
-          "law": "UU No. 5 Tahun 1997 (as amended)",
-          "definition": "Psychoactive substances affecting CNS that alter mental activity and behavior, with dependence potential",
-          "golongan": {
-            "I": {
-              "description": "Not for therapy; very strong dependence; science only",
-              "examples": ["MDMA (Ecstasy)", "LSD", "Flualprazolam", "Deschloroketamine"]
-            },
-            "II": {
-              "description": "Therapeutic use; strong dependence potential",
-              "examples": ["Methylphenidate (Ritalin)", "Secobarbital", "Amfetamine", "Methamphetamine"]
-            },
-            "III": {
-              "description": "Therapeutic use; moderate dependence potential",
-              "examples": ["Flunitrazepam", "Pentobarbital", "Pentazocine", "Cyclobarbital"]
-            },
-            "IV": {
-              "description": "Widely used in therapy; mild dependence potential",
-              "examples": ["Alprazolam", "Diazepam", "Lorazepam", "Clobazam", "Phenobarbital", "Nitrazepam", "Bromazepam"]
-            }
-          },
-          "note": "Psychotropics without dependence potential are classified as Obat Keras and follow standard prescription drug regulations"
-        }
-      }
-    },
-    "non_prescription_drugs": {
-      "description": "Available without a prescription, but with varying restrictions",
-      "categories": {
-        "obat_bebas": {
-          "name": "Obat Bebas (Over-the-Counter / OTC)",
-          "label": "Green circle border",
-          "examples": ["Paracetamol", "Multivitamins", "Activated charcoal", "Antacids (simple)"]
-        },
-        "obat_bebas_terbatas": {
-          "name": "Obat Bebas Terbatas (Limited OTC)",
-          "label": "Blue circle border",
-          "warning": "Has usage restrictions; warning label required (Peringatan: Obat keras dapat menyebabkan ...)",
-          "examples": ["Chlorpheniramine maleate (CTM)", "Dextromethorphan", "Pseudoephedrine", "Ibuprofen (low dose)", "Mebendazole"]
-        }
-      }
+      "key_articles": [
+        "922(1) OKT criteria",
+        "922(2) Three pillars: self-medication, chronic refill, topical",
+        "922(3) Formal OKT list pending"
+      ],
+      "description": "Detailed rules for drug classification and OKT dispensing by pharmacists"
     }
   },
   "drug_catalog": {
-    "description": "Catalog of common prescription drugs by therapeutic class with regulatory classification",
+    "source": "KMK HK.01.07/MENKES/2197/2023 - Formularium Nasional 2023",
+    "total_drugs": 339,
     "therapeutic_classes": {
-      "antibiotics": {
-        "class": "Antibiotik (Antibiotics)",
-        "classification": "Obat Keras",
-        "note": "All antibiotics are prescription-only in Indonesia to combat antimicrobial resistance",
-        "subclasses": {
-      "penicillins": {
-        "name": "Penicillin",
-        "examples": ["Amoxicillin", "Amoxicillin-Clavulanate", "Ampicillin", "Piperacillin-Tazobactam"]
-      },
-      "cephalosporins": {
-        "name": "Cephalosporin",
-        "examples": ["Cefadroxil", "Cefixime", "Ceftriaxone", "Cefotaxime", "Cefoperazone"]
-      },
-      "macrolides": {
-        "name": "Macrolide",
-        "examples": ["Azithromycin", "Erythromycin", "Clarithromycin"]
-      },
-      "fluoroquinolones": {
-        "name": "Fluoroquinolone",
-        "examples": ["Ciprofloxacin", "Levofloxacin", "Moxifloxacin"]
-      },
-      "aminoglycosides": {
-        "name": "Aminoglycoside",
-        "examples": ["Gentamicin", "Amikacin", "Streptomycin"]
-      },
-      "tetracyclines": {
-        "name": "Tetracycline",
-        "examples": ["Doxycycline", "Tetracycline"]
-      },
-      "others": {
-        "examples": ["Metronidazole", "Clindamycin", "Vancomycin", "Meropenem", "Sulfamethoxazole-Trimethoprim"]
-      }
-        }
-      },
-      "cardiovascular": {
-        "class": "Kardiovaskular (Cardiovascular)",
+      "Analgesic & Anti-inflammatory": {
+        "class": "Analgesic & Anti-inflammatory",
         "classification": "Obat Keras",
         "subclasses": {
-      "antihypertensives_acei": {
-        "name": "ACE Inhibitors",
-        "examples": ["Captopril", "Lisinopril", "Enalapril", "Ramipril"]
-      },
-      "antihypertensives_arb": {
-        "name": "ARB (Angiotensin Receptor Blockers)",
-        "examples": ["Valsartan", "Losartan", "Candesartan", "Irbesartan"]
-      },
-      "antihypertensives_ccb": {
-        "name": "Calcium Channel Blockers",
-        "examples": ["Amlodipine", "Nifedipine", "Diltiazem", "Verapamil"]
-      },
-      "beta_blockers": {
-        "name": "Beta Blockers",
-        "examples": ["Bisoprolol", "Propranolol", "Atenolol", "Metoprolol", "Carvedilol"]
-      },
-      "diuretics": {
-        "name": "Diuretics",
-        "examples": ["Furosemide", "Spironolactone", "HCTZ (Hydrochlorothiazide)", "Mannitol"]
-      },
-      "anticoagulants": {
-        "name": "Anticoagulants",
-        "examples": ["Warfarin", "Rivaroxaban", "Apixaban", "Edoxaban", "Enoxaparin", "Heparin"]
-      },
-      "antiplatelets": {
-        "name": "Antiplatelets",
-        "examples": ["Aspirin (high dose)", "Clopidogrel", "Ticagrelor"]
-      },
-      "lipid_lowering": {
-        "name": "Lipid Lowering (Statin & Others)",
-        "examples": ["Simvastatin", "Atorvastatin", "Rosuvastatin", "Gemfibrozil", "Fenofibrate", "Ezetimibe"]
-      },
-      "antiarrhythmics": {
-        "name": "Antiarrhythmics",
-        "examples": ["Digoxin", "Amiodarone", "Lidocaine (injectable)"]
-      }
+          "NSAID": {
+            "subclass": "NSAID",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam mefenamat",
+              "ibuprofen",
+              "ketoprofen",
+              "ketorolak",
+              "meloksikam",
+              "metamizol",
+              "natrium diklofenak",
+              "parasetamol",
+              "selekoksib"
+            ]
+          },
+          "Narcotic Analgesic": {
+            "subclass": "Narcotic Analgesic",
+            "classification": "Obat Keras",
+            "examples": [
+              "fentanil",
+              "hidromorfon",
+              "kodein",
+              "metadon",
+              "morfin",
+              "oksikodon",
+              "petidin",
+              "remifentanil",
+              "sufentanil",
+              "tramadol"
+            ]
+          },
+          "Antigout": {
+            "subclass": "Antigout",
+            "classification": "Obat Keras",
+            "examples": [
+              "alopurinol",
+              "febuksostat",
+              "kolkisin",
+              "probenesid"
+            ]
+          },
+          "Neuropathic Pain": {
+            "subclass": "Neuropathic Pain",
+            "classification": "Obat Keras",
+            "examples": [
+              "amitriptilin",
+              "gabapentin",
+              "karbamazepin",
+              "pregabalin"
+            ]
+          }
         }
       },
-      "endocrine": {
-        "class": "Endokrin (Endocrine / Metabolic)",
+      "Anesthetic": {
+        "class": "Anesthetic",
         "classification": "Obat Keras",
         "subclasses": {
-      "antidiabetics_oral": {
-        "name": "Oral Antidiabetics",
-        "examples": ["Metformin", "Glimepiride", "Glibenclamide", "Acarbose", "Pioglitazone", "Saxagliptin", "Dapagliflozin", "Empagliflozin"]
-      },
-      "insulin": {
-        "name": "Insulin",
-        "examples": ["Insulin aspart", "Insulin glargine", "Insulin detemir", "Regular insulin", "NPH insulin"]
-      },
-      "thyroid": {
-        "name": "Thyroid Therapy",
-        "examples": ["Levothyroxine", "Propylthiouracil (PTU)", "Methimazole"]
-      },
-      "contraceptives": {
-        "name": "Contraceptives",
-        "classification": "Obat Keras / Obat Wajib Apotek",
-        "examples": ["Combined oral contraceptives", "Progestin-only pills", "Injectable contraceptives (DMPA)", "Implants (Norplant)", "IUD"]
-      }
+          "Local Anesthetic": {
+            "subclass": "Local Anesthetic",
+            "classification": "Obat Keras",
+            "examples": [
+              "bupivakain",
+              "lidokain",
+              "ropivakain",
+              "tetrakain"
+            ]
+          },
+          "General Anesthetic": {
+            "subclass": "General Anesthetic",
+            "classification": "Obat Keras",
+            "examples": [
+              "desfluran",
+              "isofluran",
+              "ketamin",
+              "nitrous oxide",
+              "propofol",
+              "sevofluran",
+              "tiopental"
+            ]
+          },
+          "Neuromuscular Blocker": {
+            "subclass": "Neuromuscular Blocker",
+            "classification": "Obat Keras",
+            "examples": [
+              "atrakurium",
+              "rokuronium",
+              "suksinilkolin"
+            ]
+          },
+          "Preoperative Medication": {
+            "subclass": "Preoperative Medication",
+            "classification": "Obat Keras",
+            "examples": [
+              "atropin",
+              "deksmedetomidin",
+              "kloral hidrat",
+              "midazolam"
+            ]
+          }
         }
       },
-      "cns": {
-        "class": "Sistem Saraf Pusat (Central Nervous System)",
-        "classification": "Obat Keras / Psikotropika / Narkotika",
-        "subclasses": {
-      "antidepressants": {
-        "name": "Antidepressants",
-        "examples": ["Fluoxetine", "Sertraline", "Escitalopram", "Amitriptyline", "Nortriptyline", "Venlafaxine", "Mirtazapine"]
-      },
-      "antipsychotics": {
-        "name": "Antipsychotics",
-        "examples": ["Haloperidol", "Risperidone", "Olanzapine", "Quetiapine", "Clozapine", "Aripiprazole"]
-      },
-      "antiepileptics": {
-        "name": "Antiepileptics",
-        "examples": ["Phenytoin", "Carbamazepine", "Valproic acid", "Levetiracetam", "Phenobarbital", "Gabapentin", "Pregabalin"]
-      },
-      "anxiolytics_sedatives": {
-        "name": "Anxiolytics & Sedatives (Psikotropika Gol. IV)",
-        "examples": ["Alprazolam", "Diazepam", "Lorazepam", "Clobazam", "Nitrazepam", "Zolpidem"]
-      },
-      "narcotic_analgesics": {
-        "name": "Narcotic Analgesics (Narkotika)",
-        "examples": ["Morphine", "Fentanyl", "Pethidine", "Oxycodone", "Codeine", "Buprenorphine", "Tramadol"]
-      },
-      "adhd_stimulants": {
-        "name": "ADHD Stimulants (Psikotropika Gol. II)",
-        "examples": ["Methylphenidate (Ritalin)", "Dexamphetamine"]
-      }
-        }
-      },
-      "respiratory": {
-        "class": "Sistem Pernapasan (Respiratory)",
+      "Antiallergic & Anaphylaxis": {
+        "class": "Antiallergic & Anaphylaxis",
         "classification": "Obat Keras",
         "subclasses": {
-      "bronchodilators": {
-        "name": "Bronchodilators",
-        "examples": ["Salbutamol (inhaler/nebulizer)", "Ipratropium", "Tiotropium", "Formoterol", "Salmeterol"]
-      },
-      "corticosteroids_inhaled": {
-        "name": "Inhaled Corticosteroids",
-        "examples": ["Budesonide", "Fluticasone", "Beclomethasone"]
-      },
-      "antitussives_expectorants": {
-        "name": "Prescription Cough Medicine",
-        "examples": ["Codeine (as antitussive - narkotika)", "Dextromethorphan (OTC limited)"]
-      }
+          "Antiallergic": {
+            "subclass": "Antiallergic",
+            "classification": "Obat Keras",
+            "examples": [
+              "deksametason",
+              "difenhidramin",
+              "epinefrin",
+              "hidrokortison",
+              "klorfeniramin",
+              "loratadin",
+              "setirizin"
+            ]
+          }
         }
       },
-      "gi": {
-        "class": "Sistem Pencernaan (Gastrointestinal)",
-        "classification": "Obat Keras / Obat Wajib Apotek",
-        "subclasses": {
-      "ppis": {
-        "name": "Proton Pump Inhibitors",
-        "examples": ["Omeprazole", "Lansoprazole", "Pantoprazole", "Esomeprazole"]
-      },
-      "antiemetics": {
-        "name": "Antiemetics",
-        "examples": ["Ondansetron", "Metoclopramide", "Domperidone"]
-      }
-        }
-      },
-      "antiinflammatory": {
-        "class": "Anti-inflamasi (Anti-inflammatory / Pain Management)",
-        "classification": "Obat Keras / Obat Wajib Apotek / Obat Bebas Terbatas",
-        "subclasses": {
-      "nsaids_rx": {
-        "name": "Prescription NSAIDs",
-        "examples": ["Diclofenac sodium", "Piroxicam", "Meloxicam", "Celecoxib", "Ketorolac"]
-      },
-      "nsaids_otc": {
-        "name": "OTC/Limited OTC NSAIDs",
-        "examples": ["Ibuprofen (low dose)", "Paracetamol (obat bebas)", "Mefenamic acid (OWA)"]
-      },
-      "corticosteroids_systemic": {
-        "name": "Systemic Corticosteroids",
-        "examples": ["Prednisone", "Methylprednisolone", "Dexamethasone", "Betamethasone"]
-      }
-        }
-      },
-      "antiallergic": {
-        "class": "Antialergi (Antiallergics)",
-        "classification": "Mixed (Obat Keras / Obat Bebas Terbatas)",
-        "examples": {
-      "prescription": ["Fexofenadine", "Levocetirizine", "Desloratadine"],
-      "otc_limited": ["Cetirizine (reclassified OTC per Permenkes 28/2022)", "Loratadine (reclassified OTC per Permenkes 28/2022)", "Chlorpheniramine maleate"]
-        }
-      },
-      "antiinfectives_other": {
-        "class": "Antiinfeksi Lain (Other Anti-infectives)",
+      "Antidote": {
+        "class": "Antidote",
         "classification": "Obat Keras",
         "subclasses": {
-      "antifungals_systemic": {
-        "name": "Systemic Antifungals",
-        "examples": ["Fluconazole", "Itraconazole", "Ketoconazole (oral)", "Terbinafine (reclassified OTC per Permenkes 28/2022)"]
-      },
-      "antivirals": {
-        "name": "Antivirals",
-        "examples": ["Oseltamivir", "Acyclovir (oral)", "Valacyclovir", "Tenofovir", "Entecavir", "Sofosbuvir"]
-      },
-      "antimalarials": {
-        "name": "Antimalarials",
-        "examples": ["Artemisinin-based combinations (ACT)", "Primaquine", "Klorokuin"]
-      },
-      "anti_tb": {
-        "name": "Anti-Tuberculosis",
-        "examples": ["Rifampicin", "Isoniazid", "Pyrazinamide", "Ethambutol", "Streptomycin"]
-      }
+          "Antidote": {
+            "subclass": "Antidote",
+            "classification": "Obat Keras",
+            "examples": [
+              "dinatrium edetat",
+              "kalsium glukonat",
+              "nalokson",
+              "natrium bikarbonat",
+              "natrium tiosulfat",
+              "neostigmin",
+              "protamin sulfat"
+            ]
+          },
+          "Chelating Agent": {
+            "subclass": "Chelating Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "deferasiroks",
+              "deferipron",
+              "deferoksamin"
+            ]
+          },
+          "Anticoagulant Reversal": {
+            "subclass": "Anticoagulant Reversal",
+            "classification": "Obat Keras",
+            "examples": [
+              "fitomenadion"
+            ]
+          }
         }
       },
-      "oncology": {
-        "class": "Onkologi (Oncology)",
+      "Antiepileptic": {
+        "class": "Antiepileptic",
         "classification": "Obat Keras",
-        "note": "All chemotherapy and targeted therapy agents are prescription-only",
-        "examples": ["Doxorubicin", "Cyclophosphamide", "Cisplatin", "Cytarabine", "Methotrexate", "Fluorouracil", "Imatinib", "Trastuzumab", "Pembrolizumab"]
+        "subclasses": {
+          "Antiepileptic": {
+            "subclass": "Antiepileptic",
+            "classification": "Obat Keras",
+            "examples": [
+              "diazepam",
+              "fenitoin",
+              "fenobarbital",
+              "klonazepam",
+              "lamotrigin",
+              "levetirasetam",
+              "okskarbazepin",
+              "topiramat",
+              "valproat",
+              "zonisamid"
+            ]
+          },
+          "Antiepileptic (Preeclampsia/Eclampsia)": {
+            "subclass": "Antiepileptic (Preeclampsia/Eclampsia)",
+            "classification": "Obat Keras",
+            "examples": [
+              "magnesium sulfat"
+            ]
+          }
+        }
       },
-      "immunosuppressants": {
-        "class": "Imunosupresan (Immunosuppressants)",
+      "Anti-infective": {
+        "class": "Anti-infective",
         "classification": "Obat Keras",
-        "examples": ["Cyclosporine", "Tacrolimus", "Mycophenolate mofetil", "Azathioprine", "Hydroxychloroquine", "Methotrexate (low dose for autoimmune)"]
+        "subclasses": {
+          "Beta-lactam Antibiotic": {
+            "subclass": "Beta-lactam Antibiotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "amoksisilin",
+              "ampisilin",
+              "benzatin benzilpenisilin",
+              "fenoksimetil penisilin",
+              "prokain benzilpenisilin",
+              "sefadroksil",
+              "sefaleksin",
+              "sefazolin",
+              "sefepim",
+              "sefiksim",
+              "sefoperazon",
+              "sefotaksim",
+              "sefpirom",
+              "seftazidim",
+              "seftriakson",
+              "sefuroksim"
+            ]
+          },
+          "Tetracycline Antibiotic": {
+            "subclass": "Tetracycline Antibiotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "doksisiklin",
+              "minosiklin",
+              "oksitetrasiklin",
+              "tetrasiklin"
+            ]
+          },
+          "Macrolide Antibiotic": {
+            "subclass": "Macrolide Antibiotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "azitromisin",
+              "eritromisin",
+              "klaritromisin",
+              "spiramisin"
+            ]
+          },
+          "Quinolone Antibiotic": {
+            "subclass": "Quinolone Antibiotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "levofloksasin",
+              "moksifloksasin",
+              "ofloksasin",
+              "siprofloksasin"
+            ]
+          },
+          "Aminoglycoside Antibiotic": {
+            "subclass": "Aminoglycoside Antibiotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "amikasin",
+              "gentamisin",
+              "streptomisin",
+              "tobramisin"
+            ]
+          },
+          "Other Antibiotic": {
+            "subclass": "Other Antibiotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam pipemidat",
+              "fosfomisin",
+              "fosfomisin trometamol",
+              "klindamisin",
+              "kloramfenikol",
+              "kotrimoksazol",
+              "meropenem",
+              "metronidazol",
+              "nitrofurantoin",
+              "pirimetamin",
+              "sulfadiazin",
+              "vankomisin"
+            ]
+          },
+          "Leprosy Treatment": {
+            "subclass": "Leprosy Treatment",
+            "classification": "Obat Keras",
+            "examples": [
+              "dapson",
+              "klofazimin"
+            ]
+          },
+          "Antituberculosis": {
+            "subclass": "Antituberculosis",
+            "classification": "Obat Keras",
+            "examples": [
+              "bedakuilin",
+              "delamanid",
+              "etambutol",
+              "isoniazid",
+              "pirazinamid",
+              "rifampisin"
+            ]
+          },
+          "Antifungal": {
+            "subclass": "Antifungal",
+            "classification": "Obat Keras",
+            "examples": [
+              "amfoterisin b",
+              "flukonazol",
+              "griseofulvin",
+              "itrakonazol",
+              "ketokonazol",
+              "klotrimazol",
+              "mikonazol",
+              "natamisin",
+              "nistatin",
+              "terbinafin",
+              "vorikonazol"
+            ]
+          },
+          "Antiviral": {
+            "subclass": "Antiviral",
+            "classification": "Obat Keras",
+            "examples": [
+              "asiklovir",
+              "gansiklovir",
+              "oseltamivir",
+              "pegylated interferon alfa-2a",
+              "remdesivir",
+              "valasiklovir",
+              "valgansiklovir"
+            ]
+          },
+          "Antiretroviral": {
+            "subclass": "Antiretroviral",
+            "classification": "Obat Keras",
+            "examples": [
+              "abakavir",
+              "dolutegravir",
+              "efavirenz",
+              "entekavir",
+              "lamivudin",
+              "nevirapin",
+              "telbivudin",
+              "tenofovir disoproksil fumarat",
+              "zidovudin"
+            ]
+          },
+          "Antimalarial": {
+            "subclass": "Antimalarial",
+            "classification": "Obat Keras",
+            "examples": [
+              "artesunat",
+              "klorokuin",
+              "kuinin",
+              "primakuin"
+            ]
+          },
+          "Anthelmintic": {
+            "subclass": "Anthelmintic",
+            "classification": "Obat Keras",
+            "examples": [
+              "albendazol",
+              "dietilkarbamazin",
+              "ivermektin",
+              "mebendazol",
+              "pirantel pamoat",
+              "prazikuantel"
+            ]
+          }
+        }
       },
-      "hematology": {
-        "class": "Hematologi (Hematology)",
+      "Cardiovascular": {
+        "class": "Cardiovascular",
         "classification": "Obat Keras",
-        "examples": ["Erythropoietin", "Filgrastim (G-CSF)", "Iron (injectable)", "Vitamin B12 (injectable)", "Folic acid (high dose Rx)"]
+        "subclasses": {
+          "Calcium Channel Blocker": {
+            "subclass": "Calcium Channel Blocker",
+            "classification": "Obat Keras",
+            "examples": [
+              "amlodipin",
+              "diltiazem",
+              "nifedipin",
+              "verapamil"
+            ]
+          },
+          "ACE Inhibitor": {
+            "subclass": "ACE Inhibitor",
+            "classification": "Obat Keras",
+            "examples": [
+              "enalapril",
+              "imidapril",
+              "kaptopril",
+              "lisinopril",
+              "perindopril",
+              "ramipril"
+            ]
+          },
+          "Angiotensin Receptor Blocker": {
+            "subclass": "Angiotensin Receptor Blocker",
+            "classification": "Obat Keras",
+            "examples": [
+              "irbesartan",
+              "kandesartan",
+              "losartan",
+              "telmisartan",
+              "valsartan"
+            ]
+          },
+          "Beta Blocker": {
+            "subclass": "Beta Blocker",
+            "classification": "Obat Keras",
+            "examples": [
+              "atenolol",
+              "bisoprolol",
+              "karvedilol",
+              "metoprolol",
+              "propranolol"
+            ]
+          },
+          "Diuretic": {
+            "subclass": "Diuretic",
+            "classification": "Obat Keras",
+            "examples": [
+              "furosemid",
+              "hidroklorotiazid",
+              "klortalidon",
+              "spironolakton"
+            ]
+          },
+          "Statin": {
+            "subclass": "Statin",
+            "classification": "Obat Keras",
+            "examples": [
+              "atorvastatin",
+              "pravastatin",
+              "rosuvastatin",
+              "simvastatin"
+            ]
+          },
+          "Anticoagulant/Antiplatelet": {
+            "subclass": "Anticoagulant/Antiplatelet",
+            "classification": "Obat Keras",
+            "examples": [
+              "apixaban",
+              "asam asetilsalisilat",
+              "aspirin",
+              "klopidogrel",
+              "rivaroksaban",
+              "tikagrelor",
+              "warfarin"
+            ]
+          },
+          "Antiarrhythmic": {
+            "subclass": "Antiarrhythmic",
+            "classification": "Obat Keras",
+            "examples": [
+              "amiodaron",
+              "digoksin"
+            ]
+          },
+          "Antianginal": {
+            "subclass": "Antianginal",
+            "classification": "Obat Keras",
+            "examples": [
+              "gliseril trinitrat",
+              "isosorbid dinitrat"
+            ]
+          },
+          "Vasopressor/Inotrope": {
+            "subclass": "Vasopressor/Inotrope",
+            "classification": "Obat Keras",
+            "examples": [
+              "dobutamin",
+              "dopamin",
+              "milrinon",
+              "norepinefrin",
+              "vasopresin"
+            ]
+          },
+          "Thrombolytic": {
+            "subclass": "Thrombolytic",
+            "classification": "Obat Keras",
+            "examples": [
+              "alteplase",
+              "streptokinase"
+            ]
+          },
+          "Anticoagulant (Parenteral)": {
+            "subclass": "Anticoagulant (Parenteral)",
+            "classification": "Obat Keras",
+            "examples": [
+              "enoxaparin",
+              "fondaparinuks",
+              "nadroparin"
+            ]
+          },
+          "Central Antihypertensive": {
+            "subclass": "Central Antihypertensive",
+            "classification": "Obat Keras",
+            "examples": [
+              "klonidin"
+            ]
+          },
+          "ARNI": {
+            "subclass": "ARNI",
+            "classification": "Obat Keras",
+            "examples": [
+              "sacubitril valsartan"
+            ]
+          },
+          "Fibrate": {
+            "subclass": "Fibrate",
+            "classification": "Obat Keras",
+            "examples": [
+              "gemfibrozil"
+            ]
+          }
+        }
+      },
+      "Antidiabetic": {
+        "class": "Antidiabetic",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Oral Antidiabetic": {
+            "subclass": "Oral Antidiabetic",
+            "classification": "Obat Keras",
+            "examples": [
+              "akarbose",
+              "glibenklamid",
+              "gliklazid",
+              "glikuidon",
+              "glimepirid",
+              "glipizid",
+              "metformin",
+              "pioglitazon"
+            ]
+          },
+          "Insulin": {
+            "subclass": "Insulin",
+            "classification": "Obat Keras",
+            "examples": [
+              "insulin aspart",
+              "insulin degludek",
+              "insulin detemir",
+              "insulin glargine",
+              "insulin glulisin",
+              "insulin lispro",
+              "insulin nph",
+              "insulin regular"
+            ]
+          },
+          "DPP-4 Inhibitor": {
+            "subclass": "DPP-4 Inhibitor",
+            "classification": "Obat Keras",
+            "examples": [
+              "linagliptin",
+              "saxagliptin",
+              "sitagliptin"
+            ]
+          },
+          "SGLT2 Inhibitor": {
+            "subclass": "SGLT2 Inhibitor",
+            "classification": "Obat Keras",
+            "examples": [
+              "dapagliflozin",
+              "empagliflozin",
+              "kanagliflozin"
+            ]
+          }
+        }
+      },
+      "Gastrointestinal": {
+        "class": "Gastrointestinal",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Antacid/Antiulcer": {
+            "subclass": "Antacid/Antiulcer",
+            "classification": "Obat Keras",
+            "examples": [
+              "esomeprazol",
+              "lansoprazol",
+              "omeprazol",
+              "pantoprazol",
+              "ranitidin"
+            ]
+          },
+          "Antiemetic": {
+            "subclass": "Antiemetic",
+            "classification": "Obat Keras",
+            "examples": [
+              "dimenhidrinat",
+              "domperidon",
+              "hiosin butilbromida",
+              "metoklopramid",
+              "ondansetron"
+            ]
+          },
+          "Laxative": {
+            "subclass": "Laxative",
+            "classification": "Obat Keras",
+            "examples": [
+              "bisakodil",
+              "laktulosa",
+              "polietilen glikol"
+            ]
+          },
+          "Antidiarrheal": {
+            "subclass": "Antidiarrheal",
+            "classification": "Obat Keras",
+            "examples": [
+              "atapulgit",
+              "loperamid"
+            ]
+          },
+          "Gastrointestinal Other": {
+            "subclass": "Gastrointestinal Other",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam ursodeoksikolat",
+              "mesalazin",
+              "sukralfat",
+              "sulfasalazin"
+            ]
+          }
+        }
+      },
+      "Respiratory": {
+        "class": "Respiratory",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Bronchodilator": {
+            "subclass": "Bronchodilator",
+            "classification": "Obat Keras",
+            "examples": [
+              "aminofilin",
+              "fenoterol",
+              "ipratropium",
+              "salbutamol",
+              "teofilin",
+              "terbutalin"
+            ]
+          },
+          "Inhaled Corticosteroid/Combination": {
+            "subclass": "Inhaled Corticosteroid/Combination",
+            "classification": "Obat Keras",
+            "examples": [
+              "budesonid",
+              "flutikason propionat",
+              "glikopironium",
+              "indakaterol"
+            ]
+          },
+          "Systemic Corticosteroid": {
+            "subclass": "Systemic Corticosteroid",
+            "classification": "Obat Keras",
+            "examples": [
+              "metilprednisolon",
+              "prednisolon",
+              "prednison"
+            ]
+          }
+        }
+      },
+      "Endocrine": {
+        "class": "Endocrine",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Thyroid Agent": {
+            "subclass": "Thyroid Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "karbimazol",
+              "levotiroksin",
+              "propiltiourasil",
+              "tiamazol"
+            ]
+          },
+          "Endocrine Other": {
+            "subclass": "Endocrine Other",
+            "classification": "Obat Keras",
+            "examples": [
+              "desmopresin",
+              "oktreotid asetat",
+              "somatropin",
+              "testosteron"
+            ]
+          },
+          "Hormone Therapy": {
+            "subclass": "Hormone Therapy",
+            "classification": "Obat Keras",
+            "examples": [
+              "estrogen terkonjugasi",
+              "medroksi progesteron asetat"
+            ]
+          }
+        }
+      },
+      "Central Nervous System": {
+        "class": "Central Nervous System",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Antidepressant": {
+            "subclass": "Antidepressant",
+            "classification": "Obat Keras",
+            "examples": [
+              "fluoksetin",
+              "maprotilin"
+            ]
+          },
+          "Antipsychotic": {
+            "subclass": "Antipsychotic",
+            "classification": "Obat Keras",
+            "examples": [
+              "flufenazin dekanoat",
+              "haloperidol",
+              "klorpromazin",
+              "klozapin",
+              "mikofenolat mofetil",
+              "mikofenolat sodium",
+              "olanzapin",
+              "quetiapin",
+              "risperidon",
+              "trifluoperazin"
+            ]
+          },
+          "Anxiolytic/Sedative": {
+            "subclass": "Anxiolytic/Sedative",
+            "classification": "Obat Keras",
+            "examples": [
+              "alprazolam",
+              "klobazam",
+              "lorazepam"
+            ]
+          },
+          "CNS Stimulant/Antidementia": {
+            "subclass": "CNS Stimulant/Antidementia",
+            "classification": "Obat Keras",
+            "examples": [
+              "donepezil",
+              "galantamin",
+              "memantin",
+              "metilfenidat",
+              "rivastigmin"
+            ]
+          }
+        }
+      },
+      "Chemotherapy": {
+        "class": "Chemotherapy",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Cytotoxic Agent": {
+            "subclass": "Cytotoxic Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "asparaginase",
+              "bendamustin",
+              "bikalutamid",
+              "bismut subsalisilat",
+              "bortezomib",
+              "busulfan",
+              "daunorubisin",
+              "doksorubisin",
+              "epirubisin",
+              "fulvestran",
+              "gemsitabin",
+              "goserelin asetat",
+              "idarubisin",
+              "imatinib",
+              "karboplatin",
+              "klorambusil",
+              "lenalidomid",
+              "lenvatinib",
+              "letrozol",
+              "leuprorelin asetat",
+              "melfalan",
+              "merkaptopurin",
+              "mesna",
+              "metotreksat",
+              "paklitaksel",
+              "ponatinib",
+              "siklofosfamid",
+              "sisplatin",
+              "sitarabin",
+              "trastuzumab",
+              "vinblastin",
+              "vinkristin"
+            ]
+          }
+        }
+      },
+      "Immunosuppressant": {
+        "class": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Immunosuppressant": {
+            "subclass": "Immunosuppressant",
+            "classification": "Obat Keras",
+            "examples": [
+              "azatioprin",
+              "basiliksimab",
+              "etanercept",
+              "leflunomid",
+              "siklosporin",
+              "takrolimus"
+            ]
+          }
+        }
+      },
+      "Reproductive System": {
+        "class": "Reproductive System",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Contraceptive": {
+            "subclass": "Contraceptive",
+            "classification": "Obat Keras",
+            "examples": [
+              "desogestrel",
+              "etonogestrel",
+              "levonorgestrel",
+              "linestrenol",
+              "nomegestrol asetat"
+            ]
+          },
+          "Obstetric Agent": {
+            "subclass": "Obstetric Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "dinoproston",
+              "karboprost",
+              "metilergometrin",
+              "misoprostol",
+              "oksitosin"
+            ]
+          }
+        }
+      },
+      "Urological": {
+        "class": "Urological",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Benign Prostatic Hyperplasia": {
+            "subclass": "Benign Prostatic Hyperplasia",
+            "classification": "Obat Keras",
+            "examples": [
+              "doksazosin",
+              "dutasterid",
+              "finasterid",
+              "tamsulosin",
+              "terazosin"
+            ]
+          },
+          "Erectile Dysfunction": {
+            "subclass": "Erectile Dysfunction",
+            "classification": "Obat Keras",
+            "examples": [
+              "sildenafil",
+              "tadalafil"
+            ]
+          },
+          "Overactive Bladder": {
+            "subclass": "Overactive Bladder",
+            "classification": "Obat Keras",
+            "examples": [
+              "imidafenasin",
+              "solifenasin"
+            ]
+          }
+        }
+      },
+      "Ophthalmological": {
+        "class": "Ophthalmological",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Ophthalmic Agent": {
+            "subclass": "Ophthalmic Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "betaksolol",
+              "brinzolamid",
+              "fluorometolon",
+              "homatropin",
+              "olopatadin",
+              "pilokarpin",
+              "tropikamid"
+            ]
+          }
+        }
+      },
+      "Dermatological": {
+        "class": "Dermatological",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Topical Anti-infective": {
+            "subclass": "Topical Anti-infective",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam fusidat",
+              "asam retinoat",
+              "asam salisilat",
+              "etil klorida",
+              "framisetin",
+              "hidrogen peroksida",
+              "kalamin",
+              "karbogliserin",
+              "klorheksidin",
+              "mupirosin",
+              "natrium fusidat",
+              "permetrin",
+              "podofilin",
+              "polikresulen",
+              "povidon iodin"
+            ]
+          },
+          "Topical Corticosteroid": {
+            "subclass": "Topical Corticosteroid",
+            "classification": "Obat Keras",
+            "examples": [
+              "betametason",
+              "desoksimetason",
+              "diflukortolon valerat",
+              "flusinolon asetonid",
+              "mometason furoat",
+              "triamsinolon asetonid"
+            ]
+          },
+          "Emollient/Protective": {
+            "subclass": "Emollient/Protective",
+            "classification": "Obat Keras",
+            "examples": [
+              "karboksimetilselulosa",
+              "urea"
+            ]
+          }
+        }
+      },
+      "Hematology & Nutrition": {
+        "class": "Hematology & Nutrition",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Vitamin/Mineral Supplement": {
+            "subclass": "Vitamin/Mineral Supplement",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam folat",
+              "fero sulfat",
+              "kolekalsiferol",
+              "piridoksin",
+              "retinol",
+              "sianokobalamin",
+              "tiamin",
+              "zinc"
+            ]
+          },
+          "Hematopoietic Agent": {
+            "subclass": "Hematopoietic Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "eltrombopag",
+              "eritropoietin alfa"
+            ]
+          },
+          "Immunoglobulin": {
+            "subclass": "Immunoglobulin",
+            "classification": "Obat Keras",
+            "examples": [
+              "imunoglobulin intravena"
+            ]
+          }
+        }
+      },
+      "Other": {
+        "class": "Other",
+        "classification": "Obat Keras",
+        "subclasses": {
+          "Hemostatic Agent": {
+            "subclass": "Hemostatic Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam aminokaproat",
+              "asam traneksamat"
+            ]
+          },
+          "Prostanoid": {
+            "subclass": "Prostanoid",
+            "classification": "Obat Keras",
+            "examples": [
+              "beraprost sodium",
+              "iloprost"
+            ]
+          },
+          "Mucolytic": {
+            "subclass": "Mucolytic",
+            "classification": "Obat Keras",
+            "examples": [
+              "asetilsistein",
+              "n-asetil sistein"
+            ]
+          },
+          "Vestibular Agent": {
+            "subclass": "Vestibular Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "betahistin"
+            ]
+          },
+          "Decongestant": {
+            "subclass": "Decongestant",
+            "classification": "Obat Keras",
+            "examples": [
+              "fenilefrin",
+              "oksimetazolin"
+            ]
+          },
+          "Ophthalmic Agent": {
+            "subclass": "Ophthalmic Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "natrium hialuronat",
+              "ranibizumab",
+              "sodium hialuronat"
+            ]
+          },
+          "Cholinesterase Inhibitor": {
+            "subclass": "Cholinesterase Inhibitor",
+            "classification": "Obat Keras",
+            "examples": [
+              "piridostigmin"
+            ]
+          },
+          "Sympathomimetic": {
+            "subclass": "Sympathomimetic",
+            "classification": "Obat Keras",
+            "examples": [
+              "efedrin"
+            ]
+          },
+          "Bone Metabolism Agent": {
+            "subclass": "Bone Metabolism Agent",
+            "classification": "Obat Keras",
+            "examples": [
+              "asam zoledronat",
+              "dinatrium klodronat",
+              "kalsium folinat",
+              "kalsium karbonat",
+              "kalsium laktat"
+            ]
+          },
+          "Potassium Binder": {
+            "subclass": "Potassium Binder",
+            "classification": "Obat Keras",
+            "examples": [
+              "kalsium polistiren sulfonat",
+              "natrium polistiren sulfonat",
+              "sevelamer"
+            ]
+          }
+        }
       }
-    }
-  },
-  "drug_labeling": {
-    "description": "Drug labeling symbols mandated by Indonesian regulations",
-    "labels": [
-      {
-        "symbol": "Green circle (Lingkaran Hijau)",
-        "meaning": "Obat Bebas (Over-the-Counter) - no prescription needed, safe for self-medication",
-        "regulation": "Permenkes 917/1993"
-      },
-      {
-        "symbol": "Blue circle (Lingkaran Biru)",
-        "meaning": "Obat Bebas Terbatas (Limited OTC) - caution label required on packaging",
-        "regulation": "Permenkes 917/1993"
-      },
-      {
-        "symbol": "Red circle with black 'K' (Lingkaran Merah dengan huruf K hitam)",
-        "meaning": "Obat Keras (Prescription Drug) - requires prescription from physician/dentist/veterinarian",
-        "history": "Originally 'Daftar G' (Gevaarlijk = dangerous) per KMK 02396/A/SK/VIII/1986",
-        "regulation": "UU 17/2023, PP 28/2024, KMK 02396/1986"
-      },
-      {
-        "symbol": "Red circle with black '+' (Lingkaran Merah dengan palang +)",
-        "meaning": "Narkotika (Narcotic) - strictest control, special prescription form",
-        "regulation": "UU 35/2009"
-      }
-    ]
-  },
-  "prescription_requirements": {
-    "valid_prescription": {
-      "elements": [
-        "Patient name, age, address",
-        "Physician name, license number (SIP/SKP), signature, and date",
-        "Drug name, strength, quantity, and dosage instructions (signa)",
-        "Facility name and address"
-      ],
-      "validity_period": "Standard prescription valid for 30 days (narcotics and psychotropics may have shorter validity)"
     },
-    "electronic_prescription": {
-      "legal_basis": "Pasal 320 UU 17/2023 (resep elektronik diakui setara dengan resep konvensional)",
-      "requires": "Integrated with National Health Information System (SIK)"
-    },
-    "dispensing_restrictions": [
+    "all_drugs": [
       {
-        "drug_type": "Obat Keras",
-        "max_dispensing": "Per prescription as written; refill requires new prescription (except for chronic disease refill program)"
+        "name": "abakavir",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
       },
       {
-        "drug_type": "Narkotika",
-        "max_dispensing": "Special prescription form (blanko narkotika); limited quantity per prescription"
+        "name": "akarbose",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
       },
       {
-        "drug_type": "Psikotropika",
-        "max_dispensing": "Special prescription form; limited quantity; recording required"
+        "name": "albendazol",
+        "class": "Anti-infective",
+        "subclass": "Anthelmintic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "alopurinol",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Antigout",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "alprazolam",
+        "class": "Central Nervous System",
+        "subclass": "Anxiolytic/Sedative",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "alteplase",
+        "class": "Cardiovascular",
+        "subclass": "Thrombolytic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "amfoterisin b",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "amikasin",
+        "class": "Anti-infective",
+        "subclass": "Aminoglycoside Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "aminofilin",
+        "class": "Respiratory",
+        "subclass": "Bronchodilator",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "amiodaron",
+        "class": "Cardiovascular",
+        "subclass": "Antiarrhythmic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "amitriptilin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Neuropathic Pain",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "amlodipin",
+        "class": "Cardiovascular",
+        "subclass": "Calcium Channel Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "amoksisilin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ampisilin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "artesunat",
+        "class": "Anti-infective",
+        "subclass": "Antimalarial",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asam asetilsalisilat",
+        "class": "Cardiovascular",
+        "subclass": "Anticoagulant/Antiplatelet",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asam mefenamat",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asam pipemidat",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asam ursodeoksikolat",
+        "class": "Gastrointestinal",
+        "subclass": "Gastrointestinal Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asam zoledronat",
+        "class": "Other",
+        "subclass": "Bone Metabolism Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asiklovir",
+        "class": "Anti-infective",
+        "subclass": "Antiviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "asparaginase",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "atenolol",
+        "class": "Cardiovascular",
+        "subclass": "Beta Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "atorvastatin",
+        "class": "Cardiovascular",
+        "subclass": "Statin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "atrakurium",
+        "class": "Anesthetic",
+        "subclass": "Neuromuscular Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "atropin",
+        "class": "Anesthetic",
+        "subclass": "Preoperative Medication",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "azatioprin",
+        "class": "Immunosuppressant",
+        "subclass": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "azitromisin",
+        "class": "Anti-infective",
+        "subclass": "Macrolide Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "basiliksimab",
+        "class": "Immunosuppressant",
+        "subclass": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bedakuilin",
+        "class": "Anti-infective",
+        "subclass": "Antituberculosis",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bendamustin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "benzatin benzilpenisilin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "beraprost sodium",
+        "class": "Other",
+        "subclass": "Prostanoid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "betahistin",
+        "class": "Other",
+        "subclass": "Vestibular Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "betaksolol",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "betametason",
+        "class": "Dermatological",
+        "subclass": "Topical Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bikalutamid",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bisakodil",
+        "class": "Gastrointestinal",
+        "subclass": "Laxative",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bisoprolol",
+        "class": "Cardiovascular",
+        "subclass": "Beta Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bortezomib",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "brinzolamid",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "budesonid",
+        "class": "Respiratory",
+        "subclass": "Inhaled Corticosteroid/Combination",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "bupivakain",
+        "class": "Anesthetic",
+        "subclass": "Local Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "busulfan",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dapson",
+        "class": "Anti-infective",
+        "subclass": "Leprosy Treatment",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "daunorubisin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "deferasiroks",
+        "class": "Antidote",
+        "subclass": "Chelating Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "deferipron",
+        "class": "Antidote",
+        "subclass": "Chelating Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "deferoksamin",
+        "class": "Antidote",
+        "subclass": "Chelating Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "deksametason",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "deksmedetomidin",
+        "class": "Anesthetic",
+        "subclass": "Preoperative Medication",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "delamanid",
+        "class": "Anti-infective",
+        "subclass": "Antituberculosis",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "desfluran",
+        "class": "Anesthetic",
+        "subclass": "General Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "desmopresin",
+        "class": "Endocrine",
+        "subclass": "Endocrine Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "desogestrel",
+        "class": "Reproductive System",
+        "subclass": "Contraceptive",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "desoksimetason",
+        "class": "Dermatological",
+        "subclass": "Topical Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "diazepam",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dietilkarbamazin",
+        "class": "Anti-infective",
+        "subclass": "Anthelmintic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "difenhidramin",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "diflukortolon valerat",
+        "class": "Dermatological",
+        "subclass": "Topical Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "digoksin",
+        "class": "Cardiovascular",
+        "subclass": "Antiarrhythmic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "diltiazem",
+        "class": "Cardiovascular",
+        "subclass": "Calcium Channel Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dimenhidrinat",
+        "class": "Gastrointestinal",
+        "subclass": "Antiemetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dinatrium klodronat",
+        "class": "Other",
+        "subclass": "Bone Metabolism Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dinoproston",
+        "class": "Reproductive System",
+        "subclass": "Obstetric Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dobutamin",
+        "class": "Cardiovascular",
+        "subclass": "Vasopressor/Inotrope",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "doksazosin",
+        "class": "Urological",
+        "subclass": "Benign Prostatic Hyperplasia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "doksisiklin",
+        "class": "Anti-infective",
+        "subclass": "Tetracycline Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "doksorubisin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dolutegravir",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "domperidon",
+        "class": "Gastrointestinal",
+        "subclass": "Antiemetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "donepezil",
+        "class": "Central Nervous System",
+        "subclass": "CNS Stimulant/Antidementia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dopamin",
+        "class": "Cardiovascular",
+        "subclass": "Vasopressor/Inotrope",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "dutasterid",
+        "class": "Urological",
+        "subclass": "Benign Prostatic Hyperplasia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "efavirenz",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "efedrin",
+        "class": "Other",
+        "subclass": "Sympathomimetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "eltrombopag",
+        "class": "Hematology & Nutrition",
+        "subclass": "Hematopoietic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "enalapril",
+        "class": "Cardiovascular",
+        "subclass": "ACE Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "entekavir",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "epinefrin",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "epirubisin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "eritromisin",
+        "class": "Anti-infective",
+        "subclass": "Macrolide Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "eritropoietin alfa",
+        "class": "Hematology & Nutrition",
+        "subclass": "Hematopoietic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "esomeprazol",
+        "class": "Gastrointestinal",
+        "subclass": "Antacid/Antiulcer",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "estrogen terkonjugasi",
+        "class": "Endocrine",
+        "subclass": "Hormone Therapy",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "etanercept",
+        "class": "Immunosuppressant",
+        "subclass": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "etonogestrel",
+        "class": "Reproductive System",
+        "subclass": "Contraceptive",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "febuksostat",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Antigout",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fenilefrin",
+        "class": "Other",
+        "subclass": "Decongestant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fenitoin",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fenobarbital",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fenoksimetil penisilin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fenoterol",
+        "class": "Respiratory",
+        "subclass": "Bronchodilator",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "finasterid",
+        "class": "Urological",
+        "subclass": "Benign Prostatic Hyperplasia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "flufenazin dekanoat",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "flukonazol",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fluoksetin",
+        "class": "Central Nervous System",
+        "subclass": "Antidepressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fluorometolon",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "flusinolon asetonid",
+        "class": "Dermatological",
+        "subclass": "Topical Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "flutikason propionat",
+        "class": "Respiratory",
+        "subclass": "Inhaled Corticosteroid/Combination",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fondaparinuks",
+        "class": "Cardiovascular",
+        "subclass": "Anticoagulant (Parenteral)",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fosfomisin trometamol",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "fulvestran",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "furosemid",
+        "class": "Cardiovascular",
+        "subclass": "Diuretic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gabapentin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Neuropathic Pain",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gansiklovir",
+        "class": "Anti-infective",
+        "subclass": "Antiviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gemfibrozil",
+        "class": "Cardiovascular",
+        "subclass": "Fibrate",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gemsitabin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gentamisin",
+        "class": "Anti-infective",
+        "subclass": "Aminoglycoside Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "glibenklamid",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gliklazid",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "glikopironium",
+        "class": "Respiratory",
+        "subclass": "Inhaled Corticosteroid/Combination",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "glikuidon",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "glimepirid",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "glipizid",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "gliseril trinitrat",
+        "class": "Cardiovascular",
+        "subclass": "Antianginal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "goserelin asetat",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "griseofulvin",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "haloperidol",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "hidroklorotiazid",
+        "class": "Cardiovascular",
+        "subclass": "Diuretic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "hidrokortison",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "hidromorfon",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "hiosin butilbromida",
+        "class": "Gastrointestinal",
+        "subclass": "Antiemetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "homatropin",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ibuprofen",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "idarubisin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "iloprost",
+        "class": "Other",
+        "subclass": "Prostanoid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "imatinib",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "imidafenasin",
+        "class": "Urological",
+        "subclass": "Overactive Bladder",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "imidapril",
+        "class": "Cardiovascular",
+        "subclass": "ACE Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "imunoglobulin intravena",
+        "class": "Hematology & Nutrition",
+        "subclass": "Immunoglobulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "indakaterol",
+        "class": "Respiratory",
+        "subclass": "Inhaled Corticosteroid/Combination",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin aspart",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin detemir",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin glargine",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin glulisin",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin lispro",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin nph",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "insulin regular",
+        "class": "Antidiabetic",
+        "subclass": "Insulin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "irbesartan",
+        "class": "Cardiovascular",
+        "subclass": "Angiotensin Receptor Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "isofluran",
+        "class": "Anesthetic",
+        "subclass": "General Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "isoniazid",
+        "class": "Anti-infective",
+        "subclass": "Antituberculosis",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "isosorbid dinitrat",
+        "class": "Cardiovascular",
+        "subclass": "Antianginal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "itrakonazol",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ivermektin",
+        "class": "Anti-infective",
+        "subclass": "Anthelmintic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kalsium polistiren sulfonat",
+        "class": "Other",
+        "subclass": "Potassium Binder",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kandesartan",
+        "class": "Cardiovascular",
+        "subclass": "Angiotensin Receptor Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kaptopril",
+        "class": "Cardiovascular",
+        "subclass": "ACE Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "karbamazepin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Neuropathic Pain",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "karbimazol",
+        "class": "Endocrine",
+        "subclass": "Thyroid Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "karboplatin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ketamin",
+        "class": "Anesthetic",
+        "subclass": "General Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ketokonazol",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ketoprofen",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ketorolak",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klaritromisin",
+        "class": "Anti-infective",
+        "subclass": "Macrolide Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klindamisin",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klobazam",
+        "class": "Central Nervous System",
+        "subclass": "Anxiolytic/Sedative",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klofazimin",
+        "class": "Anti-infective",
+        "subclass": "Leprosy Treatment",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klonazepam",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klonidin",
+        "class": "Cardiovascular",
+        "subclass": "Central Antihypertensive",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klopidogrel",
+        "class": "Cardiovascular",
+        "subclass": "Anticoagulant/Antiplatelet",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kloral hidrat",
+        "class": "Anesthetic",
+        "subclass": "Preoperative Medication",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klorambusil",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kloramfenikol",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klorfeniramin",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klorokuin",
+        "class": "Anti-infective",
+        "subclass": "Antimalarial",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klorpromazin",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "klotrimazol",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kodein",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kolkisin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Antigout",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kotrimoksazol",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "kuinin",
+        "class": "Anti-infective",
+        "subclass": "Antimalarial",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "laktulosa",
+        "class": "Gastrointestinal",
+        "subclass": "Laxative",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lamivudin",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lamotrigin",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lansoprazol",
+        "class": "Gastrointestinal",
+        "subclass": "Antacid/Antiulcer",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "leflunomid",
+        "class": "Immunosuppressant",
+        "subclass": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lenalidomid",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lenvatinib",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "letrozol",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "leuprorelin asetat",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "levetirasetam",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "levofloksasin",
+        "class": "Anti-infective",
+        "subclass": "Quinolone Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "levonorgestrel",
+        "class": "Reproductive System",
+        "subclass": "Contraceptive",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "levotiroksin",
+        "class": "Endocrine",
+        "subclass": "Thyroid Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lidokain",
+        "class": "Anesthetic",
+        "subclass": "Local Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "linestrenol",
+        "class": "Reproductive System",
+        "subclass": "Contraceptive",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lisinopril",
+        "class": "Cardiovascular",
+        "subclass": "ACE Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "loratadin",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "lorazepam",
+        "class": "Central Nervous System",
+        "subclass": "Anxiolytic/Sedative",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "maprotilin",
+        "class": "Central Nervous System",
+        "subclass": "Antidepressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mebendazol",
+        "class": "Anti-infective",
+        "subclass": "Anthelmintic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "medroksi progesteron asetat",
+        "class": "Endocrine",
+        "subclass": "Hormone Therapy",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "melfalan",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "merkaptopurin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "meropenem",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mesalazin",
+        "class": "Gastrointestinal",
+        "subclass": "Gastrointestinal Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mesna",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metadon",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metamizol",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metformin",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metilergometrin",
+        "class": "Reproductive System",
+        "subclass": "Obstetric Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metilfenidat",
+        "class": "Central Nervous System",
+        "subclass": "CNS Stimulant/Antidementia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metilprednisolon",
+        "class": "Respiratory",
+        "subclass": "Systemic Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metoklopramid",
+        "class": "Gastrointestinal",
+        "subclass": "Antiemetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metoprolol",
+        "class": "Cardiovascular",
+        "subclass": "Beta Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metotreksat",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "metronidazol",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mikofenolat mofetil",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mikofenolat sodium",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mikonazol",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "milrinon",
+        "class": "Cardiovascular",
+        "subclass": "Vasopressor/Inotrope",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "minosiklin",
+        "class": "Anti-infective",
+        "subclass": "Tetracycline Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "misoprostol",
+        "class": "Reproductive System",
+        "subclass": "Obstetric Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "moksifloksasin",
+        "class": "Anti-infective",
+        "subclass": "Quinolone Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "mometason furoat",
+        "class": "Dermatological",
+        "subclass": "Topical Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "morfin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "n-asetil sistein",
+        "class": "Other",
+        "subclass": "Mucolytic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "nadroparin",
+        "class": "Cardiovascular",
+        "subclass": "Anticoagulant (Parenteral)",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "natamisin",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "natrium diklofenak",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "natrium tiosulfat",
+        "class": "Antidote",
+        "subclass": "Antidote",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "neostigmin",
+        "class": "Antidote",
+        "subclass": "Antidote",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "nevirapin",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "nifedipin",
+        "class": "Cardiovascular",
+        "subclass": "Calcium Channel Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "nistatin",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "nomegestrol asetat",
+        "class": "Reproductive System",
+        "subclass": "Contraceptive",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "norepinefrin",
+        "class": "Cardiovascular",
+        "subclass": "Vasopressor/Inotrope",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ofloksasin",
+        "class": "Anti-infective",
+        "subclass": "Quinolone Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "oksikodon",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "oksimetazolin",
+        "class": "Other",
+        "subclass": "Decongestant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "oksitetrasiklin",
+        "class": "Anti-infective",
+        "subclass": "Tetracycline Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "oksitosin",
+        "class": "Reproductive System",
+        "subclass": "Obstetric Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "okskarbazepin",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "oktreotid asetat",
+        "class": "Endocrine",
+        "subclass": "Endocrine Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "olopatadin",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "omeprazol",
+        "class": "Gastrointestinal",
+        "subclass": "Antacid/Antiulcer",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ondansetron",
+        "class": "Gastrointestinal",
+        "subclass": "Antiemetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "paklitaksel",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pantoprazol",
+        "class": "Gastrointestinal",
+        "subclass": "Antacid/Antiulcer",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "parasetamol",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pegylated interferon alfa-2a",
+        "class": "Anti-infective",
+        "subclass": "Antiviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "perindopril",
+        "class": "Cardiovascular",
+        "subclass": "ACE Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "petidin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pilokarpin",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pioglitazon",
+        "class": "Antidiabetic",
+        "subclass": "Oral Antidiabetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pirantel pamoat",
+        "class": "Anti-infective",
+        "subclass": "Anthelmintic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pirazinamid",
+        "class": "Anti-infective",
+        "subclass": "Antituberculosis",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "piridostigmin",
+        "class": "Other",
+        "subclass": "Cholinesterase Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pirimetamin",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ponatinib",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "prazikuantel",
+        "class": "Anti-infective",
+        "subclass": "Anthelmintic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "prednisolon",
+        "class": "Respiratory",
+        "subclass": "Systemic Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "prednison",
+        "class": "Respiratory",
+        "subclass": "Systemic Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "pregabalin",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Neuropathic Pain",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "primakuin",
+        "class": "Anti-infective",
+        "subclass": "Antimalarial",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "probenesid",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Antigout",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "prokain benzilpenisilin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "propiltiourasil",
+        "class": "Endocrine",
+        "subclass": "Thyroid Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "propofol",
+        "class": "Anesthetic",
+        "subclass": "General Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "propranolol",
+        "class": "Cardiovascular",
+        "subclass": "Beta Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "quetiapin",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ramipril",
+        "class": "Cardiovascular",
+        "subclass": "ACE Inhibitor",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ranibizumab",
+        "class": "Other",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ranitidin",
+        "class": "Gastrointestinal",
+        "subclass": "Antacid/Antiulcer",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "remdesivir",
+        "class": "Anti-infective",
+        "subclass": "Antiviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "remifentanil",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "rifampisin",
+        "class": "Anti-infective",
+        "subclass": "Antituberculosis",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "risperidon",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "rivaroksaban",
+        "class": "Cardiovascular",
+        "subclass": "Anticoagulant/Antiplatelet",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "rokuronium",
+        "class": "Anesthetic",
+        "subclass": "Neuromuscular Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "ropivakain",
+        "class": "Anesthetic",
+        "subclass": "Local Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "rosuvastatin",
+        "class": "Cardiovascular",
+        "subclass": "Statin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sacubitril valsartan",
+        "class": "Cardiovascular",
+        "subclass": "ARNI",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "salbutamol",
+        "class": "Respiratory",
+        "subclass": "Bronchodilator",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefadroksil",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefaleksin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefazolin",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefepim",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefiksim",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefoperazon",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefotaksim",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefpirom",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "seftazidim",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "seftriakson",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sefuroksim",
+        "class": "Anti-infective",
+        "subclass": "Beta-lactam Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "selekoksib",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "NSAID",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "setirizin",
+        "class": "Antiallergic & Anaphylaxis",
+        "subclass": "Antiallergic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sevelamer",
+        "class": "Other",
+        "subclass": "Potassium Binder",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sevofluran",
+        "class": "Anesthetic",
+        "subclass": "General Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "siklofosfamid",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "siklosporin",
+        "class": "Immunosuppressant",
+        "subclass": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sildenafil",
+        "class": "Urological",
+        "subclass": "Erectile Dysfunction",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "simvastatin",
+        "class": "Cardiovascular",
+        "subclass": "Statin",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "siprofloksasin",
+        "class": "Anti-infective",
+        "subclass": "Quinolone Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sisplatin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sitarabin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "solifenasin",
+        "class": "Urological",
+        "subclass": "Overactive Bladder",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "somatropin",
+        "class": "Endocrine",
+        "subclass": "Endocrine Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "spiramisin",
+        "class": "Anti-infective",
+        "subclass": "Macrolide Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "spironolakton",
+        "class": "Cardiovascular",
+        "subclass": "Diuretic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "streptokinase",
+        "class": "Cardiovascular",
+        "subclass": "Thrombolytic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "streptomisin",
+        "class": "Anti-infective",
+        "subclass": "Aminoglycoside Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sufentanil",
+        "class": "Analgesic & Anti-inflammatory",
+        "subclass": "Narcotic Analgesic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "suksinilkolin",
+        "class": "Anesthetic",
+        "subclass": "Neuromuscular Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sulfadiazin",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "sulfasalazin",
+        "class": "Gastrointestinal",
+        "subclass": "Gastrointestinal Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "takrolimus",
+        "class": "Immunosuppressant",
+        "subclass": "Immunosuppressant",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tamsulosin",
+        "class": "Urological",
+        "subclass": "Benign Prostatic Hyperplasia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "telbivudin",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tenofovir disoproksil fumarat",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "teofilin",
+        "class": "Respiratory",
+        "subclass": "Bronchodilator",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "terazosin",
+        "class": "Urological",
+        "subclass": "Benign Prostatic Hyperplasia",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "terbinafin",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "terbutalin",
+        "class": "Respiratory",
+        "subclass": "Bronchodilator",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "testosteron",
+        "class": "Endocrine",
+        "subclass": "Endocrine Other",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tetrakain",
+        "class": "Anesthetic",
+        "subclass": "Local Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tetrasiklin",
+        "class": "Anti-infective",
+        "subclass": "Tetracycline Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tiamazol",
+        "class": "Endocrine",
+        "subclass": "Thyroid Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tiopental",
+        "class": "Anesthetic",
+        "subclass": "General Anesthetic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tobramisin",
+        "class": "Anti-infective",
+        "subclass": "Aminoglycoside Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "topiramat",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "trastuzumab",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "triamsinolon asetonid",
+        "class": "Dermatological",
+        "subclass": "Topical Corticosteroid",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "trifluoperazin",
+        "class": "Central Nervous System",
+        "subclass": "Antipsychotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "tropikamid",
+        "class": "Ophthalmological",
+        "subclass": "Ophthalmic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "valasiklovir",
+        "class": "Anti-infective",
+        "subclass": "Antiviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "valgansiklovir",
+        "class": "Anti-infective",
+        "subclass": "Antiviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "valproat",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "vankomisin",
+        "class": "Anti-infective",
+        "subclass": "Other Antibiotic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "vasopresin",
+        "class": "Cardiovascular",
+        "subclass": "Vasopressor/Inotrope",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "verapamil",
+        "class": "Cardiovascular",
+        "subclass": "Calcium Channel Blocker",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "vinblastin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "vinkristin",
+        "class": "Chemotherapy",
+        "subclass": "Cytotoxic Agent",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "vorikonazol",
+        "class": "Anti-infective",
+        "subclass": "Antifungal",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "warfarin",
+        "class": "Cardiovascular",
+        "subclass": "Anticoagulant/Antiplatelet",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "zidovudin",
+        "class": "Anti-infective",
+        "subclass": "Antiretroviral",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
+      },
+      {
+        "name": "zonisamid",
+        "class": "Antiepileptic",
+        "subclass": "Antiepileptic",
+        "classification": "Obat Keras",
+        "source": "Fornas KMK 2197/2023"
       }
-    ]
-  },
-  "obat_wajib_apotek_lists": {
-    "description": "Obat Wajib Apotek (OWA) - certain prescription drugs that can be dispensed by pharmacists without a doctor's prescription",
-    "legal_basis": "Pasal 320(5) UU 17/2023 jo. Pasal 922(2) PP 28/2024",
-    "lists": {
-      "owa_1": {
-        "name": "Daftar Obat Wajib Apotek 1",
-        "description": "Drugs that may be dispensed for self-limiting conditions with specific quantities",
-        "examples": [
-          "Omeprazole 20 mg (max 10 capsules)",
-          "Mefenamic acid 500 mg (max 12 capsules)",
-          "Ranitidine 150 mg (max 10 tablets)",
-          "Oral contraceptives (max 1 cycle)"
-        ]
-      },
-      "owa_2": {
-        "name": "Daftar Obat Wajib Apotek 2",
-        "description": "Additional drugs for self-medication with pharmacist counseling",
-        "examples": [
-          "Salbutamol tablet 2 mg (max 30 tablets) - for asthma",
-          "Dexamethasone 0.5 mg (max 12 tablets)",
-          "Nystatin oral suspension"
-        ]
-      },
-      "owa_3": {
-        "name": "Daftar Obat Wajib Apotek 3",
-        "description": "Further additions for pharmacist-initiated therapy",
-        "examples": [
-          "Warfarin (refill for chronic patients with INR monitoring)",
-          "Insulin (refill for known diabetic patients)",
-          "Antihypertensives (refill for stable chronic patients)"
-        ]
-      }
-    }
-  },
-  "formularium_nasional": {
-    "description": "National Formulary - list of drugs covered by National Health Insurance (JKN/BPJS Kesehatan)",
-    "regulation": "KMK HK.01.07/MENKES/2197/2023 (jo. KMK HK.01.07/MENKES/1818/2024)",
-    "note": "Only drugs listed in the National Formulary are reimbursable under JKN; primarily prescription drugs"
-  },
-  "index": {
-    "description": "Quick lookup index: drug name → therapeutic class → regulatory classification",
-    "by_brand": {},
-    "by_generic": {},
-    "by_therapeutic_class": [
-      "antibiotics", "cardiovascular", "endocrine", "cns",
-      "respiratory", "gi", "antiinflammatory", "antiallergic",
-      "antiinfectives_other", "oncology", "immunosuppressants", "hematology"
     ]
   }
 }

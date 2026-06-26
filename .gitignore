@@ -1,0 +1,4 @@
+node_modules/
+*.log
+fornas-*.pdf
+fornas-text-*.txt
