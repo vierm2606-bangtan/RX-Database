@@ -1,0 +1,7 @@
+node_modules/
+.git/
+.opencode/
+self-harness/
+*.log
+fornas-*.pdf
+fornas-text-*.txt
