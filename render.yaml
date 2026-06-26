@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: rx-database
+    runtime: node
+    repo: https://github.com/vierm2606-bangtan/RX-Database
+    plan: free
+    buildCommand: npm install
+    startCommand: node app.js
+    healthCheckPath: /
+    autoDeploy: true
